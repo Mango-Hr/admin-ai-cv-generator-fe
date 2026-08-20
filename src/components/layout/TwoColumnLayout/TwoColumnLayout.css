@@ -1,0 +1,41 @@
+/* ============================================
+   TwoColumnLayout
+   70% main + 30% sidebar
+   ============================================ */
+
+.two-column-layout {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: var(--space-6);
+  width: 100%;
+}
+
+.two-column-layout__main {
+  min-width: 0;
+}
+
+.two-column-layout__sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+
+@media (max-width: 1200px) {
+  .two-column-layout {
+    grid-template-columns: 1fr 320px;
+  }
+}
+
+@media (max-width: 968px) {
+  .two-column-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .two-column-layout__sidebar {
+    order: -1;
+  }
+}

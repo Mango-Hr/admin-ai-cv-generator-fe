@@ -1,0 +1,291 @@
+/* ============================================
+   Staff Management Page
+   ============================================ */
+
+.staff-management {
+  max-width: 1400px;
+}
+
+/* ============================================
+   Header
+   ============================================ */
+
+.staff-management__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-6);
+  gap: var(--space-4);
+}
+
+.staff-management__title-section {
+  flex: 1;
+}
+
+.staff-management__title {
+  font-size: var(--text-3xl);
+  font-weight: 650;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.staff-management__subtitle {
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
+}
+
+.staff-management__actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+/* ============================================
+   Stats Grid
+   ============================================ */
+
+.staff-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.staff-stat {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.staff-stat__icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: var(--stat-bg);
+  color: var(--stat-color);
+}
+
+.staff-stat--total {
+  --stat-bg: rgba(59, 130, 246, 0.1);
+  --stat-color: var(--color-deco-blue);
+}
+
+.staff-stat--active {
+  --stat-bg: rgba(34, 197, 94, 0.1);
+  --stat-color: #22c55e;
+}
+
+.staff-stat--workload {
+  --stat-bg: rgba(249, 115, 22, 0.1);
+  --stat-color: var(--color-deco-orange);
+}
+
+.staff-stat__info {
+  flex: 1;
+}
+
+.staff-stat__value {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.staff-stat__label {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+}
+
+/* ============================================
+   Staff Grid
+   ============================================ */
+
+.staff-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--space-5);
+}
+
+/* ============================================
+   Staff Card
+   ============================================ */
+
+.staff-card {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  transition: all var(--transition-base);
+}
+
+.staff-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.staff-card__header {
+  padding: var(--space-6);
+  background: linear-gradient(135deg, var(--header-gradient-start) 0%, var(--header-gradient-end) 100%);
+  text-align: center;
+  position: relative;
+}
+
+.staff-card--admin {
+  --header-gradient-start: rgba(220, 38, 38, 0.08);
+  --header-gradient-end: rgba(220, 38, 38, 0.08);
+}
+
+.staff-card--sub_admin {
+  --header-gradient-start: rgba(5, 150, 105, 0.08);
+  --header-gradient-end: rgba(5, 150, 105, 0.08);
+}
+
+.staff-card__status {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+}
+
+.staff-card__avatar-wrapper {
+  margin-bottom: var(--space-4);
+  display: flex;
+  justify-content: center;
+}
+
+.staff-card__name {
+  font-size: var(--text-xl);
+  font-weight: 650;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.staff-card__email {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.staff-card__body {
+  padding: var(--space-5);
+}
+
+.staff-card__role {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--role-bg);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--role-color);
+  margin-bottom: var(--space-5);
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.staff-card--admin .staff-card__role {
+  --role-bg: rgba(220, 38, 38, 0.15);
+  --role-color: #dc2626;
+}
+
+.staff-card--sub_admin .staff-card__role {
+  --role-bg: rgba(5, 150, 105, 0.15);
+  --role-color: #059669;
+}
+
+.staff-card__stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.staff-card__stat {
+  text-align: center;
+}
+
+.staff-card__stat-value {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.staff-card__stat-label {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  margin-top: 4px;
+}
+
+.staff-card__info {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border-light);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.staff-card__info-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.staff-card__info-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-tertiary);
+}
+
+.staff-card__footer {
+  padding: var(--space-4) var(--space-5);
+  background: var(--color-bg-secondary);
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* ============================================
+   Empty State
+   ============================================ */
+
+.staff-management__empty {
+  grid-column: 1 / -1;
+  padding: var(--space-16) var(--space-6);
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+
+@media (max-width: 768px) {
+  .staff-management__header {
+    flex-direction: column;
+  }
+
+  .staff-management__title {
+    font-size: var(--text-2xl);
+  }
+
+  .staff-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .staff-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .staff-card__stats {
+    grid-template-columns: 1fr;
+  }
+}

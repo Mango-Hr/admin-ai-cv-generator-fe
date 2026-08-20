@@ -1,0 +1,131 @@
+/* ============================================
+   Badge Component
+   Status badges for submissions, tasks, etc.
+   ============================================ */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+}
+
+/* Pill shape (full rounded) */
+.badge--pill {
+  border-radius: var(--radius-full);
+}
+
+/* ============================================
+   Sizes
+   ============================================ */
+
+.badge--sm {
+  font-size: 0.7rem;
+  padding: 4px 10px;
+}
+
+.badge--md {
+  font-size: var(--text-xs);
+  padding: 6px 12px;
+}
+
+.badge--lg {
+  font-size: var(--text-sm);
+  padding: 8px 16px;
+}
+
+/* ============================================
+   Variants
+   ============================================ */
+
+/* New - Blue */
+.badge--new {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+}
+
+/* In Progress - Orange */
+.badge--in-progress {
+  background: rgba(249, 115, 22, 0.12);
+  color: #ea580c;
+}
+
+/* Completed - Green */
+.badge--completed {
+  background: rgba(34, 197, 94, 0.12);
+  color: #16a34a;
+}
+
+/* Review - Purple */
+.badge--review {
+  background: rgba(168, 85, 247, 0.12);
+  color: #9333ea;
+}
+
+/* Urgent - Pink/Red */
+.badge--urgent {
+  background: rgba(236, 72, 153, 0.12);
+  color: #db2777;
+}
+
+/* Active - Teal */
+.badge--active {
+  background: rgba(20, 184, 166, 0.12);
+  color: #0d9488;
+}
+
+/* Info - Default blue */
+.badge--info {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+}
+
+/* Success - Green */
+.badge--success {
+  background: rgba(34, 197, 94, 0.12);
+  color: #16a34a;
+}
+
+/* Warning - Yellow/Orange */
+.badge--warning {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+}
+
+/* Error - Red */
+.badge--error {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+}
+
+/* Neutral - Gray */
+.badge--neutral {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+}
+
+/* ============================================
+   Dot indicator
+   ============================================ */
+
+.badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.badge--sm .badge__dot {
+  width: 5px;
+  height: 5px;
+}
+
+.badge--lg .badge__dot {
+  width: 7px;
+  height: 7px;
+}

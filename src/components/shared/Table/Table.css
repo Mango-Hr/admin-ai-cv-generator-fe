@@ -1,0 +1,204 @@
+/* ============================================
+   Table Component
+   Data table with sorting, hover, responsive
+   ============================================ */
+
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+/* ============================================
+   Table Header
+   ============================================ */
+
+.table__header {
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table__header--sticky {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.table__head {
+  padding: var(--space-4);
+  text-align: left;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.table__head--center {
+  text-align: center;
+}
+
+.table__head--right {
+  text-align: right;
+}
+
+.table__head--sortable {
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.table__head--sortable:hover {
+  background: var(--color-bg-tertiary);
+}
+
+.table__head-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.table__head--center .table__head-content {
+  justify-content: center;
+}
+
+.table__head--right .table__head-content {
+  justify-content: flex-end;
+}
+
+.table__sort-icon {
+  display: flex;
+  align-items: center;
+  color: var(--color-text-tertiary);
+  transition: color var(--transition-fast);
+}
+
+.table__head--sortable:hover .table__sort-icon {
+  color: var(--color-text-secondary);
+}
+
+/* ============================================
+   Table Body
+   ============================================ */
+
+.table__body .table__row {
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.table__body .table__row:last-child {
+  border-bottom: none;
+}
+
+.table__row--clickable {
+  cursor: pointer;
+}
+
+.table__row--selected {
+  background: rgba(59, 130, 246, 0.04);
+}
+
+/* Hover effect */
+.table--hover .table__row:hover {
+  background: var(--color-bg-secondary);
+}
+
+.table--hover .table__row--selected:hover {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+/* Striped rows */
+.table--striped .table__row:nth-child(even) {
+  background: var(--color-bg-secondary);
+}
+
+.table--striped.table--hover .table__row:nth-child(even):hover {
+  background: var(--color-bg-tertiary);
+}
+
+/* Bordered */
+.table--bordered .table__cell {
+  border-right: 1px solid var(--color-border-light);
+}
+
+.table--bordered .table__cell:last-child {
+  border-right: none;
+}
+
+/* ============================================
+   Table Cell
+   ============================================ */
+
+.table__cell {
+  padding: var(--space-4);
+  color: var(--color-text-primary);
+  vertical-align: middle;
+}
+
+.table__cell--center {
+  text-align: center;
+}
+
+.table__cell--right {
+  text-align: right;
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+
+@media (max-width: 768px) {
+  .table-container {
+    border-radius: var(--radius-md);
+  }
+
+  .table__head,
+  .table__cell {
+    padding: var(--space-3);
+    font-size: var(--text-xs);
+  }
+
+  /* Horizontal scroll indicator */
+  .table-container::after {
+    content: '← Scroll →';
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-2);
+    background: var(--color-bg-secondary);
+    border-top: 1px solid var(--color-border-light);
+    font-size: var(--text-xs);
+    color: var(--color-text-tertiary);
+    pointer-events: none;
+  }
+}
+
+/* ============================================
+   Custom scrollbar
+   ============================================ */
+
+.table-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-tertiary);
+}

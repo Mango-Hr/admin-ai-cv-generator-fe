@@ -1,0 +1,294 @@
+/* ============================================
+   Settings Page
+   ============================================ */
+
+.settings-page {
+  max-width: 1200px;
+}
+
+/* ============================================
+   Header
+   ============================================ */
+
+.settings-header {
+  margin-bottom: var(--space-8);
+}
+
+.settings-title {
+  font-size: var(--text-3xl);
+  font-weight: 650;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.settings-subtitle {
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
+}
+
+/* ============================================
+   Content Layout
+   ============================================ */
+
+.settings-content {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: var(--space-6);
+}
+
+.settings-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.settings-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* ============================================
+   Navigation Items
+   ============================================ */
+
+.settings-nav-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  text-align: left;
+  border-left: 4px solid transparent;
+}
+
+.settings-nav-item:hover {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-deco-blue);
+}
+
+.settings-nav-item--active {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: var(--color-deco-blue);
+}
+
+.settings-nav-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-deco-blue);
+  flex-shrink: 0;
+}
+
+.settings-nav-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-nav-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+}
+
+.settings-nav-description {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  line-height: var(--leading-snug);
+}
+
+.settings-nav-arrow {
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+}
+
+/* ============================================
+   Form Sections
+   ============================================ */
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.form-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.form-helper {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  margin: 0;
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+/* ============================================
+   Toggle Group
+   ============================================ */
+
+.toggle-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-4);
+}
+
+.toggle-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+}
+
+.toggle-content {
+  flex: 1;
+}
+
+.toggle-title {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+}
+
+.toggle-description {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+/* ============================================
+   Toggle Switch
+   ============================================ */
+
+.toggle-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-switch input {
+  display: none;
+}
+
+.toggle-slider {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+  transition: background var(--transition-fast);
+  display: inline-block;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background: var(--color-deco-blue);
+}
+
+.toggle-slider::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: var(--radius-full);
+  transition: transform var(--transition-fast);
+}
+
+.toggle-switch input:checked + .toggle-slider::after {
+  transform: translateX(20px);
+}
+
+/* ============================================
+   Theme Options
+   ============================================ */
+
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.theme-option {
+  padding: var(--space-4);
+  background: var(--color-bg);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.theme-option:hover {
+  border-color: var(--color-deco-blue);
+  box-shadow: var(--shadow-sm);
+}
+
+.theme-option--selected {
+  border-color: var(--color-deco-blue);
+  background: rgba(59, 130, 246, 0.1);
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+
+@media (max-width: 768px) {
+  .settings-content {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-sidebar {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .settings-nav-item {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .settings-nav-description {
+    display: none;
+  }
+
+  .settings-title {
+    font-size: var(--text-2xl);
+  }
+
+  .theme-options {
+    grid-template-columns: 1fr;
+  }
+}

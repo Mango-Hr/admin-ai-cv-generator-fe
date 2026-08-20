@@ -1,0 +1,60 @@
+/* ============================================
+   ThreeColumnLayout
+   20% left + 50% center + 30% right
+   ============================================ */
+
+.three-column-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr 360px;
+  gap: var(--space-6);
+  width: 100%;
+}
+
+.three-column-layout__left {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.three-column-layout__center {
+  min-width: 0;
+}
+
+.three-column-layout__right {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+
+@media (max-width: 1400px) {
+  .three-column-layout {
+    grid-template-columns: 240px 1fr 300px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .three-column-layout {
+    grid-template-columns: 1fr 320px;
+  }
+
+  .three-column-layout__left {
+    display: none;
+  }
+}
+
+@media (max-width: 968px) {
+  .three-column-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .three-column-layout__left,
+  .three-column-layout__right {
+    display: none;
+  }
+}

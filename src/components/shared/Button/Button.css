@@ -1,0 +1,234 @@
+/* ============================================
+   Button Component
+   Matching landing page CTA style
+   ============================================ */
+
+.button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-family: var(--font-sans);
+  font-weight: 550;
+  border: none;
+  cursor: pointer;
+  transition: 
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast),
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+  white-space: nowrap;
+  user-select: none;
+  text-decoration: none;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ============================================
+   Variants
+   ============================================ */
+
+/* Primary - Matches hero__cta-primary */
+.button--primary {
+  color: var(--color-text-inverse);
+  background: var(--color-text-primary);
+  border-radius: var(--radius-full);
+}
+
+.button--primary:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.button--primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Secondary - Matches hero__cta-secondary */
+.button--secondary {
+  color: var(--color-text-primary);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+}
+
+.button--secondary:hover:not(:disabled) {
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-text-tertiary);
+  transform: translateY(-1px);
+}
+
+.button--secondary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Ghost - Transparent with subtle hover */
+.button--ghost {
+  color: var(--color-text-primary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+}
+
+.button--ghost:hover:not(:disabled) {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-border-light);
+}
+
+.button--ghost:active:not(:disabled) {
+  background: var(--color-bg-tertiary);
+}
+
+/* Destructive - For delete/dangerous actions */
+.button--destructive {
+  color: var(--color-text-inverse);
+  background: var(--color-error);
+  border-radius: var(--radius-full);
+}
+
+.button--destructive:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.button--destructive:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* ============================================
+   Sizes
+   ============================================ */
+
+.button--sm {
+  font-size: var(--text-sm);
+  padding: 8px 16px;
+}
+
+.button--sm .button__icon {
+  width: 14px;
+  height: 14px;
+}
+
+.button--md {
+  font-size: var(--text-base);
+  padding: 13px 28px;
+}
+
+.button--md .button__icon {
+  width: 18px;
+  height: 18px;
+}
+
+.button--lg {
+  font-size: var(--text-lg);
+  padding: 16px 36px;
+}
+
+.button--lg .button__icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* ============================================
+   States
+   ============================================ */
+
+.button--full-width {
+  width: 100%;
+}
+
+.button--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.button--loading {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.button--loading .button__content {
+  opacity: 0;
+}
+
+/* ============================================
+   Icon
+   ============================================ */
+
+.button__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.button__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ============================================
+   Loading Spinner
+   ============================================ */
+
+.button__spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button__spinner-icon {
+  width: 18px;
+  height: 18px;
+  animation: button-spin 0.8s linear infinite;
+}
+
+.button--sm .button__spinner-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.button--lg .button__spinner-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.button__spinner-circle {
+  stroke-dasharray: 60;
+  stroke-dashoffset: 45;
+  stroke-linecap: round;
+  animation: button-spinner-dash 1.5s ease-in-out infinite;
+}
+
+@keyframes button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes button-spinner-dash {
+  0% {
+    stroke-dasharray: 1, 200;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 100, 200;
+    stroke-dashoffset: -15;
+  }
+  100% {
+    stroke-dasharray: 100, 200;
+    stroke-dashoffset: -120;
+  }
+}

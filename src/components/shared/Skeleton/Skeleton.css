@@ -1,0 +1,115 @@
+/* ============================================
+   Skeleton Loader
+   Loading placeholders
+   ============================================ */
+
+.skeleton {
+  display: block;
+  background: var(--color-border);
+  border-radius: var(--radius-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton--circle {
+  border-radius: 50%;
+}
+
+.skeleton--rounded {
+  border-radius: var(--radius-lg);
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+
+/* Pulse animation */
+.skeleton--pulse {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* Wave/shimmer animation */
+.skeleton--wave::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.6),
+    transparent
+  );
+  animation: skeleton-wave 1.5s linear infinite;
+}
+
+@keyframes skeleton-wave {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ============================================
+   Pre-built patterns
+   ============================================ */
+
+.skeleton-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.skeleton-card {
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+}
+
+.skeleton-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.skeleton-card__body {
+  margin-top: var(--space-4);
+}
+
+.skeleton-table {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.skeleton-table__header {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.skeleton-table__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.skeleton-table__row:last-child {
+  border-bottom: none;
+}

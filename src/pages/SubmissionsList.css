@@ -1,0 +1,658 @@
+/* ============================================
+   Submissions List Page
+   ============================================ */
+
+.submissions-list {
+  max-width: 1600px;
+}
+
+/* ============================================
+   Header
+   ============================================ */
+
+.submissions-list__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-6);
+  gap: var(--space-4);
+}
+
+.submissions-list__title-section {
+  flex: 1;
+}
+
+.submissions-list__title {
+  font-size: var(--text-3xl);
+  font-weight: 650;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.submissions-list__subtitle {
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
+}
+
+.submissions-list__actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+/* ============================================
+   Filters Bar
+   ============================================ */
+
+.submissions-list__filters {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  margin-bottom: var(--space-6);
+}
+
+.submissions-list__filters-row {
+  display: grid;
+  grid-template-columns: 1fr 200px 200px auto;
+  gap: var(--space-4);
+  align-items: flex-end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.filter-group__label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.filter-group__clear {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ============================================
+   Stats Bar
+   ============================================ */
+
+.submissions-list__stats {
+  display: flex;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.stat-pill {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.stat-pill:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-pill--active {
+  background: var(--color-text-primary);
+  color: white;
+  border-color: var(--color-text-primary);
+}
+
+.stat-pill__icon {
+  width: 18px;
+  height: 18px;
+  opacity: 0.7;
+}
+
+.stat-pill__label {
+  font-weight: 500;
+}
+
+.stat-pill__count {
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.stat-pill:not(.stat-pill--active) .stat-pill__count {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+/* ============================================
+   Data Table
+   ============================================ */
+
+.submissions-table-wrapper {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.submissions-data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.submissions-data-table thead {
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.submissions-data-table th {
+  padding: var(--space-4);
+  text-align: left;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.submissions-data-table tbody tr {
+  border-bottom: 1px solid var(--color-border-light);
+  transition: background var(--transition-fast);
+}
+
+.submissions-data-table tbody tr:hover {
+  background: var(--color-bg-tertiary);
+}
+
+.submissions-data-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.submissions-data-table td {
+  padding: var(--space-4);
+  font-size: var(--text-sm);
+}
+
+/* Table Cells */
+.table-cell-client {
+  min-width: 200px;
+}
+
+.table-cell-client__name {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+}
+
+.table-cell-client__email {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+
+.table-cell-id {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+
+.table-cell-role {
+  min-width: 180px;
+}
+
+.table-cell-role__title {
+  color: var(--color-text-primary);
+  margin-bottom: 2px;
+}
+
+.table-cell-role__company {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+
+.table-cell-assigned {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 140px;
+}
+
+.table-cell-assigned__names {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.table-cell-assigned__name-bold {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.table-cell-assigned__name {
+  color: var(--color-text-primary);
+}
+
+.table-cell-time {
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+.table-cell-actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+/* ============================================
+   Pagination
+   ============================================ */
+
+.submissions-list__pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+}
+
+.submissions-list__pagination-info {
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+}
+
+.submissions-list__pagination-controls {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* ============================================
+   Empty State
+   ============================================ */
+
+.submissions-list__empty {
+  padding: var(--space-16) var(--space-6);
+}
+
+/* ============================================
+   Loading State
+   ============================================ */
+
+.submissions-list__loading {
+  padding: var(--space-8);
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+
+@media (max-width: 1200px) {
+  .submissions-list__filters-row {
+    grid-template-columns: 1fr 180px;
+  }
+
+  .filter-group:nth-child(3),
+  .filter-group:nth-child(4) {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 1024px) {
+  .submissions-list {
+    padding: var(--space-4);
+  }
+
+  .submissions-list__header {
+    margin-bottom: var(--space-4);
+  }
+
+  .submissions-list__title {
+    font-size: var(--text-2xl);
+  }
+
+  .submissions-list__filters {
+    padding: var(--space-4);
+    margin-bottom: var(--space-4);
+  }
+
+  .submissions-list__stats {
+    margin-bottom: var(--space-4);
+  }
+
+  .submissions-data-table th {
+    padding: var(--space-3);
+    font-size: 0.85rem;
+  }
+
+  .submissions-data-table td {
+    padding: var(--space-3);
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .submissions-list {
+    padding: var(--space-3);
+  }
+
+  .submissions-list__header {
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+
+  .submissions-list__title {
+    font-size: var(--text-xl);
+    margin-bottom: var(--space-1);
+  }
+
+  .submissions-list__subtitle {
+    font-size: var(--text-sm);
+  }
+
+  .submissions-list__actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .submissions-list__filters {
+    padding: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+
+  .submissions-list__filters-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+
+  .filter-group:nth-child(3),
+  .filter-group:nth-child(4) {
+    grid-column: span 1;
+  }
+
+  .submissions-list__stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+  }
+
+  .stat-pill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-1);
+    padding: var(--space-3);
+    font-size: 0.75rem;
+    text-align: center;
+  }
+
+  .stat-pill__icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .stat-pill__label {
+    display: block;
+    font-size: 0.7rem;
+    line-height: 1.2;
+    max-width: 100%;
+    word-wrap: break-word;
+  }
+
+  .stat-pill__count {
+    padding: 2px 6px;
+    font-size: 0.65rem;
+    font-weight: 600;
+  }
+
+  .submissions-table-wrapper {
+    overflow-x: auto;
+    border-radius: var(--radius-lg);
+  }
+
+  .submissions-data-table {
+    min-width: 600px;
+    font-size: 0.8rem;
+  }
+
+  .submissions-data-table th {
+    padding: var(--space-2) var(--space-2);
+    font-size: 0.65rem;
+    white-space: normal;
+    line-height: 1.2;
+  }
+
+  .submissions-data-table td {
+    padding: var(--space-2);
+    font-size: 0.75rem;
+  }
+
+  .table-cell-client {
+    min-width: 150px;
+  }
+
+  .table-cell-client__name {
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  .table-cell-client__email {
+    font-size: 0.6rem;
+  }
+
+  .table-cell-id {
+    font-size: 0.6rem;
+  }
+
+  .table-cell-role {
+    min-width: 130px;
+  }
+
+  .table-cell-role__title {
+    margin-bottom: 1px;
+  }
+
+  .table-cell-role__company {
+    font-size: 0.6rem;
+  }
+
+  .table-cell-assigned {
+    min-width: 100px;
+    gap: var(--space-1);
+  }
+
+  .table-cell-assigned__names {
+    gap: 0;
+  }
+
+  .table-cell-assigned__name-bold {
+    font-size: 0.75rem;
+  }
+
+  .table-cell-time {
+    white-space: normal;
+    font-size: 0.6rem;
+  }
+
+  .table-cell-actions {
+    gap: 4px;
+  }
+
+  .table-cell-actions button {
+    padding: 4px !important;
+  }
+
+  .submissions-list__pagination {
+    flex-direction: column;
+    gap: var(--space-2);
+    align-items: stretch;
+    padding: var(--space-3);
+  }
+
+  .submissions-list__pagination-info {
+    font-size: 0.75rem;
+    text-align: center;
+  }
+
+  .submissions-list__pagination-controls {
+    justify-content: center;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .submissions-list {
+    padding: var(--space-2);
+  }
+
+  .submissions-list__title {
+    font-size: var(--text-lg);
+    margin-bottom: 4px;
+  }
+
+  .submissions-list__subtitle {
+    font-size: 0.7rem;
+  }
+
+  .submissions-list__filters {
+    padding: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+
+  .submissions-list__filters-row {
+    gap: var(--space-2);
+  }
+
+  .filter-group__label {
+    font-size: 0.65rem;
+  }
+
+  .submissions-list__stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: var(--space-3);
+  }
+
+  .stat-pill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: var(--space-2);
+    font-size: 0.6rem;
+    text-align: center;
+    min-width: unset;
+    flex: unset;
+  }
+
+  .stat-pill__icon {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .stat-pill__label {
+    display: block;
+    font-size: 0.6rem;
+    line-height: 1.1;
+    max-width: 100%;
+    word-wrap: break-word;
+  }
+
+  .stat-pill__count {
+    padding: 2px 4px;
+    font-size: 0.55rem;
+  }
+
+  .submissions-data-table {
+    min-width: 500px;
+    font-size: 0.7rem;
+  }
+
+  .submissions-data-table th {
+    padding: 6px 4px;
+    font-size: 0.55rem;
+  }
+
+  .submissions-data-table td {
+    padding: 6px 4px;
+    font-size: 0.7rem;
+  }
+
+  .table-cell-client {
+    min-width: 120px;
+  }
+
+  .table-cell-client__name {
+    margin-bottom: 1px;
+    font-size: 0.7rem;
+  }
+
+  .table-cell-client__email {
+    font-size: 0.55rem;
+  }
+
+  .table-cell-id {
+    font-size: 0.55rem;
+  }
+
+  .table-cell-role {
+    min-width: 100px;
+  }
+
+  .table-cell-role__title {
+    font-size: 0.7rem;
+    margin-bottom: 0;
+  }
+
+  .table-cell-role__company {
+    font-size: 0.55rem;
+  }
+
+  .table-cell-assigned {
+    min-width: 80px;
+    gap: 4px;
+  }
+
+  .table-cell-assigned__name-bold {
+    font-size: 0.65rem;
+  }
+
+  .table-cell-time {
+    font-size: 0.55rem;
+  }
+
+  .table-cell-actions {
+    gap: 2px;
+  }
+
+  .submissions-list__pagination {
+    padding: var(--space-2);
+    gap: var(--space-1);
+  }
+
+  .submissions-list__pagination-info {
+    font-size: 0.65rem;
+  }
+
+  .submissions-list__pagination-controls {
+    gap: 2px;
+  }
+}
