@@ -171,11 +171,11 @@ export default function Login() {
           </div>
 
           {/* Footer */}
-          <div className="login__footer">
+          {/* <div className="login__footer">
             <a href="/" className="login__footer-link">
               ← Back to Home
             </a>
-          </div>
+          </div> */}
         </div>
       </motion.div>
     </div>
