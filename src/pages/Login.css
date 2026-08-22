@@ -85,6 +85,45 @@
   gap: var(--space-5);
 }
 
+.login__password-field {
+  position: relative;
+}
+
+.login__password-toggle {
+  position: absolute;
+  right: var(--space-3);
+  top: calc(50% + var(--space-4));
+  transform: translateY(-50%);
+  margin-top: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  z-index: 10;
+  width: 52px;
+  height: 22px;
+}
+
+.login__password-toggle svg {
+  width: 22px;
+  height: 22px;
+}
+
+.login__password-toggle:hover {
+  color: var(--color-text-secondary);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.login__password-toggle:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
 .login__remember {
   display: flex;
   align-items: center;
@@ -206,15 +245,21 @@
   text-align: center;
 }
 
-.login__footer-link {
+.login__footer-text {
   font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.login__footer-link {
   color: var(--color-deco-blue);
   font-weight: 500;
+  text-decoration: none;
   transition: color var(--transition-fast);
 }
 
 .login__footer-link:hover {
   color: var(--color-accent-hover);
+  text-decoration: underline;
 }
 
 /* ============================================

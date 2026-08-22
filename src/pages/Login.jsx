@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { FileText, Mail, Lock, Info, ArrowRight } from 'lucide-react'
+import { useNavigate, Link } from 'react-router-dom'
+import { FileText, Mail, Lock, Info, ArrowRight, Eye, EyeOff } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Button from '../components/shared/Button'
 import { Input } from '../components/shared/Input'
@@ -24,6 +24,8 @@ export default function Login() {
     password: '',
     remember: false,
   })
+  const [showPassword, setShowPassword] = useState(false)
+  const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
 
   // Redirect if already authenticated
@@ -39,13 +41,49 @@ export default function Login() {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }))
+    // Clear error for this field when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }))
+    }
+  }
+
+  const validateForm = () => {
+    const newErrors = {}
+
+    // Validate email first
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required'
+      setErrors(newErrors)
+      return false
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address'
+      setErrors(newErrors)
+      return false
+    }
+
+    // Validate password
+    if (!formData.password) {
+      newErrors.password = 'Password is required'
+      setErrors(newErrors)
+      return false
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters'
+      setErrors(newErrors)
+      return false
+    }
+
+    setErrors({})
+    return true
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    if (!formData.email || !formData.password) {
-      toast.error('Please fill in all fields')
+    if (!validateForm()) {
       return
     }
 
@@ -101,21 +139,31 @@ export default function Login() {
               value={formData.email}
               onChange={handleChange}
               icon={<Mail />}
-              required
+              error={errors.email}
               autoComplete="email"
             />
 
-            <Input
-              label="Password"
-              type="password"
-              name="password"
-              placeholder="Enter your password"
-              value={formData.password}
-              onChange={handleChange}
-              icon={<Lock />}
-              required
-              autoComplete="current-password"
-            />
+            <div className="login__password-field">
+              <Input
+                label="Password"
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                placeholder="Enter your password"
+                value={formData.password}
+                onChange={handleChange}
+                icon={<Lock />}
+                error={errors.password}
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                className="login__password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff size={25} /> : <Eye size={25} />}
+              </button>
+            </div>
 
             <div className="login__remember">
               <input
@@ -171,11 +219,14 @@ export default function Login() {
           </div>
 
           {/* Footer */}
-          {/* <div className="login__footer">
-            <a href="/" className="login__footer-link">
-              ← Back to Home
-            </a>
-          </div> */}
+          <div className="login__footer">
+            <p className="login__footer-text">
+              Don't have an account?{' '}
+              <Link to="/signup" className="login__footer-link">
+                Sign Up
+              </Link>
+            </p>
+          </div>
         </div>
       </motion.div>
     </div>

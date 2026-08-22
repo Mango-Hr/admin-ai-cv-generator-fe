@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { ToastProvider } from './contexts/ToastContext'
 import { AuthProvider, ProtectedRoute } from './contexts/AuthContext'
 import Login from './pages/Login'
+import Signup from './pages/Signup'
 import AdminDashboard from './pages/AdminDashboard'
 import SubmissionsList from './pages/SubmissionsList'
 import SubmissionDetail from './pages/SubmissionDetail'
@@ -37,8 +38,9 @@ function App() {
         <Router>
           <HashCleanup />
           <Routes>
-            {/* Login Route */}
+            {/* Login & Signup Routes */}
             <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
             <Route path="/" element={<Login />} />
 
             {/* Protected Admin Routes */}
