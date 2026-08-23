@@ -87,32 +87,25 @@
 
 .login__password-field {
   position: relative;
+  width: 100%;
 }
 
 .login__password-toggle {
   position: absolute;
   right: var(--space-3);
-  top: calc(50% + var(--space-4));
-  transform: translateY(-50%);
-  margin-top: 0;
+  top: 38px;
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--color-text-tertiary);
+  color: var(--color-text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: var(--space-2);
   border-radius: var(--radius-md);
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background var(--transition-fast);
   z-index: 10;
-  width: 52px;
-  height: 22px;
-}
-
-.login__password-toggle svg {
-  width: 22px;
-  height: 22px;
+  line-height: 1;
 }
 
 .login__password-toggle:hover {
@@ -121,7 +114,13 @@
 }
 
 .login__password-toggle:active {
-  transform: translateY(-50%) scale(0.95);
+  transform: scale(0.95);
+}
+
+.login__password-toggle svg {
+  width: 20px;
+  height: 20px;
+  display: flex;
 }
 
 .login__remember {

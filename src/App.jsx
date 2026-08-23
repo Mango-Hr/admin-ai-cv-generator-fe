@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { ToastProvider } from './contexts/ToastContext'
-import { AuthProvider, ProtectedRoute } from './contexts/AuthContext'
+import { AuthProvider, ProtectedRoute, useAuth } from './contexts/AuthContext'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import AdminDashboard from './pages/AdminDashboard'
@@ -31,6 +31,34 @@ function HashCleanup() {
   return null
 }
 
+// Role-based dashboard router
+function DashboardRouter() {
+  const { user, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        fontSize: '1.125rem',
+        color: 'var(--color-text-secondary)'
+      }}>
+        Loading...
+      </div>
+    )
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+
+  // Both super_admin and sub_admin see AdminDashboard
+  // Content differs based on role (passed as prop)
+  return <AdminDashboard userRole={user.role} />
+}
+
 function App() {
   return (
     <AuthProvider>
@@ -47,15 +75,15 @@ function App() {
             <Route
               path="/admin"
               element={
-                <ProtectedRoute requireRole="sub_admin">
-                  <AdminDashboard />
+                <ProtectedRoute>
+                  <DashboardRouter />
                 </ProtectedRoute>
               }
             />
             <Route
               path="/admin/submissions"
               element={
-                <ProtectedRoute requireRole="admin">
+                <ProtectedRoute requireRole="super_admin">
                   <SubmissionsList />
                 </ProtectedRoute>
               }
@@ -63,7 +91,7 @@ function App() {
             <Route
               path="/admin/submissions/:id"
               element={
-                <ProtectedRoute requireRole="sub_admin">
+                <ProtectedRoute requireRole="super_admin">
                   <SubmissionDetail />
                 </ProtectedRoute>
               }
@@ -71,7 +99,7 @@ function App() {
             <Route
               path="/admin/tasks"
               element={
-                <ProtectedRoute requireRole="sub_admin">
+                <ProtectedRoute requireRole="super_admin">
                   <TaskManagement />
                 </ProtectedRoute>
               }
@@ -79,7 +107,7 @@ function App() {
             <Route
               path="/admin/staff"
               element={
-                <ProtectedRoute requireRole="admin">
+                <ProtectedRoute requireRole="super_admin">
                   <StaffManagement />
                 </ProtectedRoute>
               }
@@ -87,7 +115,7 @@ function App() {
             <Route
               path="/admin/prompts"
               element={
-                <ProtectedRoute requireRole="admin">
+                <ProtectedRoute requireRole="super_admin">
                   <PromptManagement />
                 </ProtectedRoute>
               }
@@ -95,7 +123,7 @@ function App() {
             <Route
               path="/admin/generate/:id"
               element={
-                <ProtectedRoute requireRole="sub_admin">
+                <ProtectedRoute requireRole="super_admin">
                   <CVGeneration />
                 </ProtectedRoute>
               }
@@ -103,7 +131,7 @@ function App() {
             <Route
               path="/admin/settings"
               element={
-                <ProtectedRoute requireRole="sub_admin">
+                <ProtectedRoute requireRole="super_admin">
                   <SettingsPage />
                 </ProtectedRoute>
               }

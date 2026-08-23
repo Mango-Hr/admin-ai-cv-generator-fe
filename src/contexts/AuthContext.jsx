@@ -1,36 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { loginAdmin, logoutAdmin, createAdmin, getAdminProfile, getStoredAdminUser } from '../services/authService'
 
 const AuthContext = createContext()
-
-/**
- * Mock users for authentication
- */
-const MOCK_USERS = [
-  {
-    id: 1,
-    name: 'Admin User',
-    email: 'admin@company.com',
-    password: 'admin123', // In real app, this would be hashed
-    role: 'admin',
-    avatar: null,
-  },
-  {
-    id: 2,
-    name: 'Sarah Johnson',
-    email: 'sarah@company.com',
-    password: 'sarah123',
-    role: 'sub_admin',
-    avatar: null,
-  },
-  {
-    id: 3,
-    name: 'Michael Brown',
-    email: 'michael@company.com',
-    password: 'michael123',
-    role: 'sub_admin',
-    avatar: null,
-  },
-]
 
 /**
  * AuthProvider component
@@ -43,18 +14,10 @@ export function AuthProvider({ children }) {
   // Check for existing session on mount
   useEffect(() => {
     const checkAuth = () => {
-      const storedUser = localStorage.getItem('auth_user')
-      const token = localStorage.getItem('auth_token')
+      const storedUser = getStoredAdminUser()
       
-      if (storedUser && token) {
-        try {
-          const parsedUser = JSON.parse(storedUser)
-          setUser(parsedUser)
-        } catch (error) {
-          console.error('Failed to parse stored user:', error)
-          localStorage.removeItem('auth_user')
-          localStorage.removeItem('auth_token')
-        }
+      if (storedUser) {
+        setUser(storedUser)
       }
       
       setLoading(false)
@@ -64,33 +27,32 @@ export function AuthProvider({ children }) {
   }, [])
 
   /**
+   * Signup function
+   * Creates a new admin account and logs the user in
+   */
+  const signup = async (userData) => {
+    try {
+      const newAdmin = await createAdmin(userData)
+      // Auto-login the user after signup
+      setUser(newAdmin)
+      return newAdmin
+    } catch (error) {
+      throw error
+    }
+  }
+
+  /**
    * Login function
-   * Validates credentials and sets user session
+   * Authenticates admin and sets user session
    */
   const login = async (email, password) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    // Find user
-    const foundUser = MOCK_USERS.find(
-      u => u.email === email && u.password === password
-    )
-
-    if (!foundUser) {
-      throw new Error('Invalid email or password')
+    try {
+      const adminData = await loginAdmin(email, password)
+      setUser(adminData)
+      return adminData
+    } catch (error) {
+      throw error
     }
-
-    // Create session
-    const { password: _, ...userWithoutPassword } = foundUser
-    const token = 'mock_token_' + Date.now()
-
-    // Store in localStorage
-    localStorage.setItem('auth_user', JSON.stringify(userWithoutPassword))
-    localStorage.setItem('auth_token', token)
-
-    setUser(userWithoutPassword)
-
-    return userWithoutPassword
   }
 
   /**
@@ -98,22 +60,27 @@ export function AuthProvider({ children }) {
    * Clears user session
    */
   const logout = () => {
-    localStorage.removeItem('auth_user')
-    localStorage.removeItem('auth_token')
+    logoutAdmin()
     setUser(null)
   }
 
   /**
    * Check if user has specific role
+   * super_admin has all permissions (can access everything)
    */
   const hasRole = (role) => {
     if (!user) return false
-    if (role === 'admin') {
-      return user.role === 'admin'
+    
+    // super_admin has access to everything
+    if (user.role === 'super_admin') {
+      return true
     }
+    
+    // sub_admin can only access sub_admin pages
     if (role === 'sub_admin') {
-      return user.role === 'admin' || user.role === 'sub_admin'
+      return user.role === 'sub_admin'
     }
+    
     return false
   }
 
@@ -128,6 +95,7 @@ export function AuthProvider({ children }) {
     user,
     loading,
     login,
+    signup,
     logout,
     hasRole,
     isAuthenticated,
@@ -171,7 +139,7 @@ export function ProtectedRoute({ children, requireRole = null }) {
 
   if (!user) {
     // Redirect to login
-    window.location.href = '#/login'
+    window.location.href = '/login'
     return null
   }
 

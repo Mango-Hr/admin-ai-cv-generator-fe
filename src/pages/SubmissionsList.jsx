@@ -16,7 +16,7 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { formatDistanceToNow } from 'date-fns'
+import { formatDistanceToNow, parseISO } from 'date-fns'
 import AdminLayout from '../components/layout/AdminLayout'
 import { Input } from '../components/shared/Input'
 import { Select } from '../components/shared/Input'
@@ -24,8 +24,9 @@ import Button from '../components/shared/Button'
 import Badge from '../components/shared/Badge'
 import Skeleton from '../components/shared/Skeleton'
 import EmptyState from '../components/shared/EmptyState'
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '../components/shared/Modal/Modal'
 import { useToast } from '../contexts/ToastContext'
-import { submissionsService, staffService } from '../services/mockData'
+import { fetchSubmissions } from '../services/submissionsService'
 import './SubmissionsList.css'
 
 const STATUS_FILTERS = [
@@ -43,8 +44,9 @@ export default function SubmissionsList() {
   const [loading, setLoading] = useState(true)
   const [submissions, setSubmissions] = useState([])
   const [filteredSubmissions, setFilteredSubmissions] = useState([])
-  const [staff, setStaff] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, submissionId: null, submissionName: '' })
+  const [deletingId, setDeletingId] = useState(null)
   
   // Filters
   const [filters, setFilters] = useState({
@@ -73,13 +75,10 @@ export default function SubmissionsList() {
   const loadData = async () => {
     setLoading(true)
     try {
-      const [submissionsData, staffData] = await Promise.all([
-        submissionsService.getAll(),
-        staffService.getAll(),
-      ])
+      const data = await fetchSubmissions()
+      const submissionsData = data.submissions || []
       
       setSubmissions(submissionsData)
-      setStaff(staffData)
       
       // Calculate status counts
       const counts = {
@@ -106,11 +105,11 @@ export default function SubmissionsList() {
       const search = filters.search.toLowerCase()
       result = result.filter(
         s =>
-          s.clientName.toLowerCase().includes(search) ||
-          s.email.toLowerCase().includes(search) ||
-          s.id.toLowerCase().includes(search) ||
-          s.targetRole.toLowerCase().includes(search) ||
-          s.targetCompany.toLowerCase().includes(search)
+          `${s.client.first_name} ${s.client.last_name}`.toLowerCase().includes(search) ||
+          s.client.email.toLowerCase().includes(search) ||
+          s.reference_id.toLowerCase().includes(search) ||
+          s.target_position.toLowerCase().includes(search) ||
+          (s.target_company?.toLowerCase() || '').includes(search)
       )
     }
 
@@ -122,9 +121,9 @@ export default function SubmissionsList() {
     // Assigned filter
     if (filters.assignedTo !== 'all') {
       if (filters.assignedTo === 'unassigned') {
-        result = result.filter(s => !s.assignedTo)
+        result = result.filter(s => !s.assigned_to)
       } else {
-        result = result.filter(s => s.assignedTo?.id === parseInt(filters.assignedTo))
+        result = result.filter(s => s.assigned_to?.id === filters.assignedTo)
       }
     }
 
@@ -149,15 +148,29 @@ export default function SubmissionsList() {
     toast.success('Data refreshed')
   }
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this submission?')) return
+  const handleDelete = (submissionId, clientName) => {
+    setDeleteModal({
+      isOpen: true,
+      submissionId,
+      submissionName: clientName,
+    })
+  }
 
+  const confirmDelete = async () => {
+    if (!deleteModal.submissionId) return
+
+    setDeletingId(deleteModal.submissionId)
     try {
-      await submissionsService.delete(id)
+      // TODO: Replace with actual API call
+      // await deleteSubmission(deleteModal.submissionId)
       toast.success('Submission deleted successfully')
       loadData()
     } catch (error) {
       toast.error('Failed to delete submission')
+      console.error(error)
+    } finally {
+      setDeletingId(null)
+      setDeleteModal({ isOpen: false, submissionId: null, submissionName: '' })
     }
   }
 
@@ -232,11 +245,15 @@ export default function SubmissionsList() {
               >
                 <option value="all">All Staff</option>
                 <option value="unassigned">Unassigned</option>
-                {staff.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.name}
-                  </option>
-                ))}
+                {submissions
+                  .filter(s => s.assigned_to)
+                  .map(s => s.assigned_to)
+                  .filter((staff, index, self) => self.findIndex(s => s.id === staff.id) === index)
+                  .map((staff) => (
+                    <option key={staff.id} value={staff.id}>
+                      {staff.first_name} {staff.last_name}
+                    </option>
+                  ))}
               </Select>
             </div>
 
@@ -291,8 +308,10 @@ export default function SubmissionsList() {
               <thead>
                 <tr>
                   <th>Client</th>
-                  <th>ID</th>
-                  <th>Target Role</th>
+                  <th>Reference ID</th>
+                  <th>Target Position</th>
+                  <th>Company</th>
+                  <th>Priority</th>
                   <th>Status</th>
                   <th>Assigned To</th>
                   <th>Submitted</th>
@@ -305,38 +324,45 @@ export default function SubmissionsList() {
                     <td>
                       <div className="table-cell-client">
                         <div className="table-cell-client__name">
-                          {submission.clientName}
+                          {submission.client.first_name} {submission.client.last_name}
                         </div>
                         <div className="table-cell-client__email">
-                          {submission.email}
+                          {submission.client.email}
                         </div>
                       </div>
                     </td>
                     <td>
-                      <div className="table-cell-id">{submission.id}</div>
+                      <div className="table-cell-id">{submission.reference_id}</div>
                     </td>
                     <td>
                       <div className="table-cell-role">
                         <div className="table-cell-role__title">
-                          {submission.targetRole}
-                        </div>
-                        <div className="table-cell-role__company">
-                          {submission.targetCompany}
+                          {submission.target_position}
                         </div>
                       </div>
+                    </td>
+                    <td>
+                      <div className="table-cell-company">
+                        {submission.target_company || '—'}
+                      </div>
+                    </td>
+                    <td>
+                      <Badge variant={submission.priority || 'info'}>
+                        {submission.priority || 'unset'}
+                      </Badge>
                     </td>
                     <td>
                       <Badge variant={submission.status}>{submission.status}</Badge>
                     </td>
                     <td>
-                      {submission.assignedTo ? (
+                      {submission.assigned_to ? (
                         <div className="table-cell-assigned">
                           <div className="table-cell-assigned__names">
                             <div className="table-cell-assigned__name-bold">
-                              {submission.assignedTo.name.split(' ')[0]}
+                              {submission.assigned_to.first_name}
                             </div>
                             <div className="table-cell-assigned__name-bold">
-                              {submission.assignedTo.name.split(' ')[1] || ''}
+                              {submission.assigned_to.last_name}
                             </div>
                           </div>
                         </div>
@@ -348,24 +374,18 @@ export default function SubmissionsList() {
                     </td>
                     <td>
                       <div className="table-cell-time">
-                        {formatDistanceToNow(submission.submittedAt, { addSuffix: true })}
+                        {formatDistanceToNow(parseISO(submission.created_at), { addSuffix: true })}
                       </div>
                     </td>
                     <td>
                       <div className="table-cell-actions">
-                        <Link to={`/admin/submissions/${submission.id}`} style={{ textDecoration: 'none' }}>
+                        <Link to={`/admin/submissions/${submission.reference_id}`} style={{ textDecoration: 'none' }}>
                           <Button
                             variant="ghost"
                             size="sm"
                             icon={<Eye />}
                           />
                         </Link>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          icon={<Trash2 />}
-                          onClick={() => handleDelete(submission.id)}
-                        />
                       </div>
                     </td>
                   </tr>
@@ -402,6 +422,36 @@ export default function SubmissionsList() {
           </motion.div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, submissionId: null, submissionName: '' })}
+        size="sm"
+      >
+        <ModalHeader title="Delete Submission" onClose={() => setDeleteModal({ isOpen: false, submissionId: null, submissionName: '' })} />
+        <ModalBody>
+          <p style={{ marginBottom: 'var(--space-4)', color: 'var(--color-text-secondary)' }}>
+            Are you sure you want to delete this submission from <strong>{deleteModal.submissionName}</strong>? This action cannot be undone.
+          </p>
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            variant="ghost"
+            onClick={() => setDeleteModal({ isOpen: false, submissionId: null, submissionName: '' })}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            loading={deletingId === deleteModal.submissionId}
+            disabled={deletingId === deleteModal.submissionId}
+            onClick={confirmDelete}
+          >
+            Delete
+          </Button>
+        </ModalFooter>
+      </Modal>
     </AdminLayout>
   )
 }

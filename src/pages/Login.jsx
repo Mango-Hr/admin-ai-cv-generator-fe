@@ -1,18 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { FileText, Mail, Lock, Info, ArrowRight, Eye, EyeOff } from 'lucide-react'
+import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Button from '../components/shared/Button'
 import { Input } from '../components/shared/Input'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
+import { getUserFriendlyError, logTechnicalError } from '../utils/errorMessages'
 import logoImg from '../assets/textbg.png'
 import './Login.css'
-
-const DEMO_ACCOUNTS = [
-  { email: 'admin@company.com', password: 'admin123', role: 'Admin', badge: 'admin' },
-  { email: 'sarah@company.com', password: 'sarah123', role: 'Sub-Admin', badge: 'sub' },
-]
 
 export default function Login() {
   const navigate = useNavigate()
@@ -94,7 +90,9 @@ export default function Login() {
       toast.success('Login successful!')
       navigate('/admin')
     } catch (error) {
-      toast.error(error.message || 'Login failed')
+      const { userMessage, technicalError } = getUserFriendlyError(error.message)
+      logTechnicalError('Login', technicalError)
+      toast.error(userMessage)
     } finally {
       setLoading(false)
     }
@@ -192,31 +190,6 @@ export default function Login() {
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
-
-          {/* Demo Credentials */}
-          <div className="login__demo">
-            <div className="login__demo-title">
-              <Info size={16} className="login__demo-icon" />
-              Demo Accounts
-            </div>
-            <div className="login__demo-list">
-              {DEMO_ACCOUNTS.map((account, index) => (
-                <div
-                  key={index}
-                  className="login__demo-item"
-                  onClick={() => handleDemoLogin(account)}
-                >
-                  <div className="login__demo-role">
-                    <span>{account.role}</span>
-                    <span className={`login__demo-role-badge login__demo-role-badge--${account.badge}`}>
-                      {account.badge.toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="login__demo-email">{account.email}</div>
-                </div>
-              ))}
-            </div>
-          </div>
 
           {/* Footer */}
           <div className="login__footer">

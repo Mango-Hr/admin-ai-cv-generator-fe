@@ -19,6 +19,8 @@ import Badge from '../../shared/Badge'
 import Skeleton from '../../shared/Skeleton'
 import { useAuth } from '../../../contexts/AuthContext'
 import { useToast } from '../../../contexts/ToastContext'
+import { getAdminProfile } from '../../../services/authService'
+import { getNewSubmissionsCount } from '../../../services/submissionsService'
 import logoImg from '../../../assets/textbg.png'
 import './AdminLayout.css'
 
@@ -26,16 +28,16 @@ const NAV_ITEMS = [
   {
     section: 'Main',
     items: [
-      { path: '/admin', icon: <LayoutDashboard />, label: 'Dashboard', roles: ['admin', 'sub_admin'] },
-      { path: '/admin/submissions', icon: <FileStack />, label: 'Submissions', badge: 12, roles: ['admin'] },
-      { path: '/admin/tasks', icon: <CheckSquare />, label: 'My Tasks', badge: 5, roles: ['admin', 'sub_admin'] },
+      { path: '/admin', icon: <LayoutDashboard />, label: 'Dashboard', roles: ['super_admin', 'sub_admin'] },
+      { path: '/admin/submissions', icon: <FileStack />, label: 'Submissions', badge: null, roles: ['super_admin'] },
+      { path: '/admin/tasks', icon: <CheckSquare />, label: 'My Tasks', badge: 5, roles: ['super_admin', 'sub_admin'] },
     ],
   },
   {
     section: 'Management',
     items: [
-      { path: '/admin/staff', icon: <Users />, label: 'Staff', roles: ['admin'] },
-      { path: '/admin/prompts', icon: <FileCode />, label: 'Prompts', roles: ['admin'] },
+      { path: '/admin/staff', icon: <Users />, label: 'Staff', roles: ['super_admin'] },
+      { path: '/admin/prompts', icon: <FileCode />, label: 'Prompts', roles: ['super_admin'] },
     ],
   },
 ]
@@ -48,6 +50,39 @@ export default function AdminLayout({ children }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [showSidebarUserMenu, setShowSidebarUserMenu] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [profile, setProfile] = useState(null)
+  const [profileLoading, setProfileLoading] = useState(true)
+  const [submissionCount, setSubmissionCount] = useState(0)
+  
+  // Fetch user profile for avatar
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const profileData = await getAdminProfile()
+        setProfile(profileData)
+      } catch (error) {
+        console.error('Failed to fetch profile:', error)
+      } finally {
+        setProfileLoading(false)
+      }
+    }
+    
+    if (user) {
+      fetchProfile()
+    }
+  }, [user])
+
+  // Fetch submission count
+  useEffect(() => {
+    const fetchSubmissionCount = async () => {
+      const count = await getNewSubmissionsCount()
+      setSubmissionCount(count)
+    }
+
+    if (user) {
+      fetchSubmissionCount()
+    }
+  }, [user])
   
   // Initialize from localStorage to persist across navigations
   const [sidebarOpen, setSidebarOpen] = useState(() => {
@@ -142,6 +177,11 @@ export default function AdminLayout({ children }) {
                         {item.badge}
                       </Badge>
                     )}
+                    {item.label === 'Submissions' && submissionCount > 0 && (
+                      <Badge size="sm" variant="new" className="admin-layout__nav-badge">
+                        {submissionCount}
+                      </Badge>
+                    )}
                   </Link>
                 ))}
               </div>
@@ -164,14 +204,14 @@ export default function AdminLayout({ children }) {
             }}
           >
             <Avatar
-              fallback={user?.name}
-              src={user?.avatar}
+              fallback={profile ? `${profile.first_name} ${profile.last_name}` : user?.name}
+              src={profile?.avatar_url || user?.avatar}
               size="sm"
               color="yellow"
             />
             <div className="admin-layout__user-info">
-              <div className="admin-layout__user-name">{user?.name}</div>
-              <div className="admin-layout__user-role">{user?.role?.replace('_', ' ')}</div>
+              <div className="admin-layout__user-name">{profile ? `${profile.first_name} ${profile.last_name}` : user?.name}</div>
+              <div className="admin-layout__user-role">{profile?.role?.replace('_', ' ') || user?.role?.replace('_', ' ')}</div>
             </div>
             <ChevronDown 
               size={16} 
@@ -276,8 +316,8 @@ export default function AdminLayout({ children }) {
                 }}
               >
                 <Avatar
-                  fallback={user?.name}
-                  src={user?.avatar}
+                  fallback={profile ? `${profile.first_name} ${profile.last_name}` : user?.name}
+                  src={profile?.avatar_url || user?.avatar}
                   size="sm"
                   color="yellow"
                 />

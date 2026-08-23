@@ -26,6 +26,7 @@ import Button from '../components/shared/Button'
 import { default as Avatar } from '../components/shared/Avatar'
 import { Select } from '../components/shared/Input'
 import Skeleton from '../components/shared/Skeleton'
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '../components/shared/Modal/Modal'
 import { useToast } from '../contexts/ToastContext'
 import { submissionsService, staffService } from '../services/mockData'
 import './SubmissionDetail.css'
@@ -72,6 +73,8 @@ export default function SubmissionDetail() {
   const [staff, setStaff] = useState([])
   const [selectedStaff, setSelectedStaff] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('')
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -130,17 +133,22 @@ export default function SubmissionDetail() {
     }
   }
 
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this submission? This action cannot be undone.')) {
-      return
-    }
+  const handleDelete = () => {
+    setDeleteModalOpen(true)
+  }
 
+  const confirmDelete = async () => {
+    setDeleting(true)
     try {
       await submissionsService.delete(id)
       toast.success('Submission deleted successfully')
       navigate('/admin/submissions')
     } catch (error) {
       toast.error('Failed to delete submission')
+      console.error(error)
+    } finally {
+      setDeleting(false)
+      setDeleteModalOpen(false)
     }
   }
 
@@ -415,6 +423,36 @@ export default function SubmissionDetail() {
           </div>
         </motion.div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        size="sm"
+      >
+        <ModalHeader title="Delete Submission" onClose={() => setDeleteModalOpen(false)} />
+        <ModalBody>
+          <p style={{ marginBottom: 'var(--space-4)', color: 'var(--color-text-secondary)' }}>
+            Are you sure you want to delete this submission from <strong>{submission?.client?.first_name} {submission?.client?.last_name}</strong>? This action cannot be undone.
+          </p>
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            variant="ghost"
+            onClick={() => setDeleteModalOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            loading={deleting}
+            disabled={deleting}
+            onClick={confirmDelete}
+          >
+            Delete
+          </Button>
+        </ModalFooter>
+      </Modal>
     </AdminLayout>
   )
 }

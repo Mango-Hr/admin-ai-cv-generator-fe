@@ -102,6 +102,24 @@
   transform: translateY(0);
 }
 
+/* Danger - Alias for destructive with red text */
+.button--danger {
+  color: #ef4444;
+  background: transparent;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-md);
+}
+
+.button--danger:hover:not(:disabled) {
+  background: #fee2e2;
+  border-color: #f87171;
+  color: #dc2626;
+}
+
+.button--danger:active:not(:disabled) {
+  background: #fecaca;
+}
+
 /* ============================================
    Sizes
    ============================================ */

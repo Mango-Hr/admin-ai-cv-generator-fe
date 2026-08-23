@@ -6,6 +6,8 @@ import Button from '../components/shared/Button'
 import { Input } from '../components/shared/Input'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
+import { validatePhoneNumber, formatPhoneNumberForDisplay } from '../utils/phoneValidator'
+import { getUserFriendlyError, logTechnicalError } from '../utils/errorMessages'
 import logoImg from '../assets/textbg.png'
 import './Signup.css'
 
@@ -17,7 +19,7 @@ const GENDER_OPTIONS = [
 
 export default function Signup() {
   const navigate = useNavigate()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, signup } = useAuth()
   const { toast } = useToast()
 
   const [formData, setFormData] = useState({
@@ -110,12 +112,9 @@ export default function Signup() {
     }
 
     // Validate phone
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required'
-      setErrors(newErrors)
-      return false
-    } else if (formData.phone.trim().length < 10) {
-      newErrors.phone = 'Please enter a valid phone number'
+    const phoneValidation = validatePhoneNumber(formData.phone)
+    if (!phoneValidation.isValid) {
+      newErrors.phone = phoneValidation.message
       setErrors(newErrors)
       return false
     }
@@ -141,13 +140,24 @@ export default function Signup() {
     setLoading(true)
 
     try {
-      // TODO: Call signup API endpoint
-      // const response = await authService.signup(formData)
+      // Validate and format phone number
+      const phoneValidation = validatePhoneNumber(formData.phone)
       
-      toast.success('Account created successfully! Please log in.')
-      navigate('/login')
+      await signup({
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        email: formData.email,
+        password: formData.password,
+        phone: phoneValidation.formattedNumber, // Send formatted phone number
+        gender: formData.gender,
+      })
+      
+      toast.success('Account created successfully!')
+      navigate('/admin')
     } catch (error) {
-      toast.error(error.message || 'Signup failed')
+      const { userMessage, technicalError } = getUserFriendlyError(error.message)
+      logTechnicalError('Signup', technicalError)
+      toast.error(userMessage)
     } finally {
       setLoading(false)
     }

@@ -4,7 +4,7 @@ import {
   UserPlus,
   RefreshCw,
   Mail,
-  Calendar,
+  Phone,
   Shield,
   CheckCircle2,
   Edit,
@@ -12,21 +12,25 @@ import {
   BarChart3,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import AdminLayout from '../components/layout/AdminLayout'
 import Button from '../components/shared/Button'
 import Badge from '../components/shared/Badge'
 import { default as Avatar } from '../components/shared/Avatar'
 import Skeleton from '../components/shared/Skeleton'
 import EmptyState from '../components/shared/EmptyState'
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '../components/shared/Modal/Modal'
 import { useToast } from '../contexts/ToastContext'
-import { staffService } from '../services/mockData'
+import { fetchStaffList, deleteStaffMember } from '../services/staffService'
 import './StaffManagement.css'
 
 export default function StaffManagement() {
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [staff, setStaff] = useState([])
+  const [stats, setStats] = useState({ total_staff: 0, active_members: 0, avg_workload: 0 })
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, staffId: null, staffName: '' })
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     loadStaff()
@@ -35,8 +39,9 @@ export default function StaffManagement() {
   const loadStaff = async () => {
     setLoading(true)
     try {
-      const staffData = await staffService.getAll()
-      setStaff(staffData)
+      const data = await fetchStaffList()
+      setStaff(data.staff || [])
+      setStats(data.stats || { total_staff: 0, active_members: 0, avg_workload: 0 })
     } catch (error) {
       toast.error('Failed to load staff')
       console.error(error)
@@ -55,17 +60,33 @@ export default function StaffManagement() {
   }
 
   const handleEdit = (member) => {
-    toast.info(`Edit ${member.name} - Coming soon`)
+    toast.info(`Edit ${member.first_name} - Coming soon`)
   }
 
   const handleDelete = (member) => {
-    toast.warning(`Delete ${member.name} - Coming soon`)
+    setDeleteModal({
+      isOpen: true,
+      staffId: member.id,
+      staffName: `${member.first_name} ${member.last_name}`,
+    })
   }
 
-  const totalStaff = staff.length
-  const activeStaff = staff.filter(s => s.status === 'active').length
-  const totalActiveSubmissions = staff.reduce((sum, s) => sum + s.activeSubmissions, 0)
-  const avgWorkload = totalStaff > 0 ? (totalActiveSubmissions / totalStaff).toFixed(1) : 0
+  const confirmDelete = async () => {
+    if (!deleteModal.staffId) return
+
+    setDeleting(true)
+    try {
+      await deleteStaffMember(deleteModal.staffId)
+      toast.success('Staff member deleted successfully')
+      loadStaff()
+    } catch (error) {
+      toast.error('Failed to delete staff member')
+      console.error(error)
+    } finally {
+      setDeleting(false)
+      setDeleteModal({ isOpen: false, staffId: null, staffName: '' })
+    }
+  }
 
   return (
     <AdminLayout>
@@ -79,7 +100,7 @@ export default function StaffManagement() {
             </p>
           </div>
           <div className="staff-management__actions">
-            <Button variant="ghost" icon={<RefreshCw />} onClick={handleRefresh}>
+            <Button variant="ghost" icon={<RefreshCw />} onClick={handleRefresh} disabled={loading}>
               Refresh
             </Button>
             <Button variant="primary" icon={<UserPlus />} onClick={handleAddStaff}>
@@ -95,7 +116,7 @@ export default function StaffManagement() {
               <Users size={24} />
             </div>
             <div className="staff-stat__info">
-              <div className="staff-stat__value">{totalStaff}</div>
+              <div className="staff-stat__value">{stats.total_staff}</div>
               <div className="staff-stat__label">Total Staff</div>
             </div>
           </div>
@@ -104,7 +125,7 @@ export default function StaffManagement() {
               <CheckCircle2 size={24} />
             </div>
             <div className="staff-stat__info">
-              <div className="staff-stat__value">{activeStaff}</div>
+              <div className="staff-stat__value">{stats.active_members}</div>
               <div className="staff-stat__label">Active Members</div>
             </div>
           </div>
@@ -113,7 +134,7 @@ export default function StaffManagement() {
               <BarChart3 size={24} />
             </div>
             <div className="staff-stat__info">
-              <div className="staff-stat__value">{avgWorkload}</div>
+              <div className="staff-stat__value">{stats.avg_workload.toFixed(1)}</div>
               <div className="staff-stat__label">Avg. Workload</div>
             </div>
           </div>
@@ -153,13 +174,12 @@ export default function StaffManagement() {
                   <div className="staff-card__header">
                     <div className="staff-card__avatar-wrapper">
                       <Avatar
-                        fallback={member.name}
-                        src={member.avatar}
+                        fallback={`${member.first_name} ${member.last_name}`}
                         size="xl"
                         color="yellow"
                       />
                     </div>
-                    <div className="staff-card__name">{member.name}</div>
+                    <div className="staff-card__name">{member.first_name} {member.last_name}</div>
                     <div className="staff-card__email">{member.email}</div>
                   </div>
 
@@ -168,20 +188,20 @@ export default function StaffManagement() {
                     {/* Role Badge */}
                     <div className="staff-card__role">
                       <Shield size={16} />
-                      {member.role === 'admin' ? 'Administrator' : 'Sub-Admin'}
+                      {member.role === 'super_admin' ? 'Super Admin' : 'Sub Admin'}
                     </div>
 
                     {/* Stats */}
                     <div className="staff-card__stats">
                       <div className="staff-card__stat">
                         <div className="staff-card__stat-value">
-                          {member.activeSubmissions}
+                          {member.active_count || 0}
                         </div>
                         <div className="staff-card__stat-label">Active</div>
                       </div>
                       <div className="staff-card__stat">
                         <div className="staff-card__stat-value">
-                          {member.completedSubmissions}
+                          {member.completed_count || 0}
                         </div>
                         <div className="staff-card__stat-label">Completed</div>
                       </div>
@@ -201,9 +221,18 @@ export default function StaffManagement() {
                           {member.email}
                         </a>
                       </div>
+                      {member.phone && (
+                        <div className="staff-card__info-item">
+                          <Phone className="staff-card__info-icon" />
+                          {member.phone}
+                        </div>
+                      )}
                       <div className="staff-card__info-item">
-                        <Calendar className="staff-card__info-icon" />
-                        Joined {format(member.joinedAt, 'MMM yyyy')}
+                        Status: {member.is_active ? (
+                          <Badge variant="completed">Active</Badge>
+                        ) : (
+                          <Badge variant="review">Inactive</Badge>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -235,6 +264,37 @@ export default function StaffManagement() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, staffId: null, staffName: '' })}
+        size="sm"
+      >
+        <ModalHeader title="Delete Staff Member" onClose={() => setDeleteModal({ isOpen: false, staffId: null, staffName: '' })} />
+        <ModalBody>
+          <p style={{ marginBottom: 'var(--space-4)', color: 'var(--color-text-secondary)' }}>
+            Are you sure you want to delete <strong>{deleteModal.staffName}</strong>? Any submissions assigned to them will be unassigned. This action cannot be undone.
+          </p>
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            variant="ghost"
+            onClick={() => setDeleteModal({ isOpen: false, staffId: null, staffName: '' })}
+            disabled={deleting}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            loading={deleting}
+            disabled={deleting}
+            onClick={confirmDelete}
+          >
+            Delete
+          </Button>
+        </ModalFooter>
+      </Modal>
     </AdminLayout>
   )
 }

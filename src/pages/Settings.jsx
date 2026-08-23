@@ -16,6 +16,7 @@ import Card from '../components/shared/Card'
 import Button from '../components/shared/Button'
 import Badge from '../components/shared/Badge'
 import { Input } from '../components/shared/Input'
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '../components/shared/Modal/Modal'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { containerVariants, staggerItem } from '../utils/animations'
@@ -53,6 +54,8 @@ export default function SettingsPage() {
   const { toast } = useToast()
   const [activeSection, setActiveSection] = useState('account')
   const [saving, setSaving] = useState(false)
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
 
   const [settings, setSettings] = useState({
     // Account
@@ -83,10 +86,15 @@ export default function SettingsPage() {
   }
 
   const handleLogout = () => {
-    if (confirm('Are you sure you want to log out?')) {
-      logout()
-      toast.success('Logged out successfully')
-    }
+    setLogoutModalOpen(true)
+  }
+
+  const confirmLogout = () => {
+    setLoggingOut(true)
+    logout()
+    toast.success('Logged out successfully')
+    setLogoutModalOpen(false)
+    setLoggingOut(false)
   }
 
   return (
@@ -362,6 +370,37 @@ export default function SettingsPage() {
           </main>
         </div>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      <Modal
+        isOpen={logoutModalOpen}
+        onClose={() => setLogoutModalOpen(false)}
+        size="sm"
+      >
+        <ModalHeader title="Confirm Logout" onClose={() => setLogoutModalOpen(false)} />
+        <ModalBody>
+          <p style={{ marginBottom: 'var(--space-4)', color: 'var(--color-text-secondary)' }}>
+            Are you sure you want to log out? You'll need to sign in again to access your account.
+          </p>
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            variant="ghost"
+            onClick={() => setLogoutModalOpen(false)}
+            disabled={loggingOut}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            loading={loggingOut}
+            disabled={loggingOut}
+            onClick={confirmLogout}
+          >
+            Logout
+          </Button>
+        </ModalFooter>
+      </Modal>
     </AdminLayout>
   )
 }
