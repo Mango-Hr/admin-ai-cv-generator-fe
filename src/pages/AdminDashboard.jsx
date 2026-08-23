@@ -247,7 +247,7 @@ export default function AdminDashboard({ userRole }) {
                           </div>
 
                           <div className="submissions-table__actions">
-                            <Link to={`/admin/submissions/${submission.reference_id}`} style={{ textDecoration: 'none' }}>
+                            <Link to={`/admin/submissions/${submission.id}`} style={{ textDecoration: 'none' }}>
                               <Button
                                 variant="ghost"
                                 size="sm"

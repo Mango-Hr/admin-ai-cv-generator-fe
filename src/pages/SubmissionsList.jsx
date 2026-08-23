@@ -311,7 +311,6 @@ export default function SubmissionsList() {
                   <th>Reference ID</th>
                   <th>Target Position</th>
                   <th>Company</th>
-                  <th>Priority</th>
                   <th>Status</th>
                   <th>Assigned To</th>
                   <th>Submitted</th>
@@ -347,11 +346,6 @@ export default function SubmissionsList() {
                       </div>
                     </td>
                     <td>
-                      <Badge variant={submission.priority || 'info'}>
-                        {submission.priority || 'unset'}
-                      </Badge>
-                    </td>
-                    <td>
                       <Badge variant={submission.status}>{submission.status}</Badge>
                     </td>
                     <td>
@@ -379,7 +373,7 @@ export default function SubmissionsList() {
                     </td>
                     <td>
                       <div className="table-cell-actions">
-                        <Link to={`/admin/submissions/${submission.reference_id}`} style={{ textDecoration: 'none' }}>
+                        <Link to={`/admin/submissions/${submission.id}`} style={{ textDecoration: 'none' }}>
                           <Button
                             variant="ghost"
                             size="sm"

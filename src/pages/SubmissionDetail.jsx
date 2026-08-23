@@ -18,7 +18,7 @@ import {
   Calendar,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { format, formatDistanceToNow } from 'date-fns'
+import { format, formatDistanceToNow, parseISO } from 'date-fns'
 import AdminLayout from '../components/layout/AdminLayout'
 import Card from '../components/shared/Card'
 import Badge from '../components/shared/Badge'
@@ -28,33 +28,9 @@ import { Select } from '../components/shared/Input'
 import Skeleton from '../components/shared/Skeleton'
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '../components/shared/Modal/Modal'
 import { useToast } from '../contexts/ToastContext'
-import { submissionsService, staffService } from '../services/mockData'
+import { fetchSubmissionById, updateSubmissionStatus, assignSubmission, unassignSubmission, deleteSubmission } from '../services/submissionsService'
+import { fetchStaffList } from '../services/staffService'
 import './SubmissionDetail.css'
-
-// Mock activity timeline
-const MOCK_TIMELINE = [
-  {
-    type: 'created',
-    title: 'Submission Created',
-    description: 'Client submitted CV request through the form',
-    timestamp: new Date('2024-01-15T10:30:00'),
-    icon: <FileText />,
-  },
-  {
-    type: 'assigned',
-    title: 'Assigned to Sarah Johnson',
-    description: 'Submission assigned for review and processing',
-    timestamp: new Date('2024-01-15T11:15:00'),
-    icon: <UserPlus />,
-  },
-  {
-    type: 'progress',
-    title: 'Status Changed to In Progress',
-    description: 'Work started on CV generation and optimization',
-    timestamp: new Date('2024-01-15T14:20:00'),
-    icon: <Play />,
-  },
-]
 
 const STATUS_OPTIONS = [
   { value: 'new', label: 'New', color: 'new' },
@@ -84,8 +60,8 @@ export default function SubmissionDetail() {
     setLoading(true)
     try {
       const [submissionData, staffData] = await Promise.all([
-        submissionsService.getById(id),
-        staffService.getAll(),
+        fetchSubmissionById(id),
+        fetchStaffList(),
       ])
       
       if (!submissionData) {
@@ -95,12 +71,13 @@ export default function SubmissionDetail() {
       }
 
       setSubmission(submissionData)
-      setStaff(staffData)
+      setStaff(staffData.staff || [])
       setSelectedStatus(submissionData.status)
-      setSelectedStaff(submissionData.assignedTo?.id?.toString() || '')
+      setSelectedStaff(submissionData.assigned_to?.id || '')
     } catch (error) {
-      toast.error('Failed to load submission')
+      toast.error('Failed to load submission details')
       console.error(error)
+      navigate('/admin/submissions')
     } finally {
       setLoading(false)
     }
@@ -113,23 +90,37 @@ export default function SubmissionDetail() {
     }
 
     try {
-      const staffMember = staff.find(s => s.id === parseInt(selectedStaff))
-      await submissionsService.update(id, { assignedTo: staffMember })
-      toast.success(`Assigned to ${staffMember.name}`)
+      await assignSubmission(id, selectedStaff)
+      const staffMember = staff.find(s => s.id === selectedStaff)
+      toast.success(`Assigned to ${staffMember.first_name} ${staffMember.last_name}`)
       loadData()
     } catch (error) {
       toast.error('Failed to assign submission')
+      console.error(error)
+    }
+  }
+
+  const handleUnassign = async () => {
+    try {
+      await unassignSubmission(id)
+      toast.success('Submission unassigned successfully')
+      setSelectedStaff('')
+      loadData()
+    } catch (error) {
+      toast.error('Failed to unassign submission')
+      console.error(error)
     }
   }
 
   const handleStatusChange = async (newStatus) => {
     try {
-      await submissionsService.update(id, { status: newStatus })
+      await updateSubmissionStatus(id, newStatus)
       setSelectedStatus(newStatus)
       toast.success('Status updated successfully')
       loadData()
     } catch (error) {
       toast.error('Failed to update status')
+      console.error(error)
     }
   }
 
@@ -140,7 +131,7 @@ export default function SubmissionDetail() {
   const confirmDelete = async () => {
     setDeleting(true)
     try {
-      await submissionsService.delete(id)
+      await deleteSubmission(id)
       toast.success('Submission deleted successfully')
       navigate('/admin/submissions')
     } catch (error) {
@@ -181,13 +172,13 @@ export default function SubmissionDetail() {
         {/* Header */}
         <div className="submission-detail__header">
           <div className="submission-detail__title-section">
-            <div className="submission-detail__id">{submission.id}</div>
-            <h1 className="submission-detail__title">{submission.clientName}</h1>
+            <div className="submission-detail__id">{submission.reference_id}</div>
+            <h1 className="submission-detail__title">{submission.client.first_name} {submission.client.last_name}</h1>
             <div className="submission-detail__meta">
               <Badge variant={submission.status}>{submission.status}</Badge>
               <span>
                 <Clock size={14} style={{ display: 'inline', marginRight: '4px' }} />
-                {formatDistanceToNow(submission.submittedAt, { addSuffix: true })}
+                {formatDistanceToNow(parseISO(submission.created_at), { addSuffix: true })}
               </span>
               {submission.priority && (
                 <Badge variant={submission.priority}>{submission.priority} priority</Badge>
@@ -195,7 +186,7 @@ export default function SubmissionDetail() {
             </div>
           </div>
           <div className="submission-detail__actions">
-            <Link to={`/chat/${submission.id}`} style={{ textDecoration: 'none' }}>
+            <Link to={`/chat/${submission.reference_id}`} style={{ textDecoration: 'none' }}>
               <Button
                 variant="primary"
                 icon={<MessageSquare />}
@@ -203,14 +194,16 @@ export default function SubmissionDetail() {
                 Open Chat
               </Button>
             </Link>
-            <Link to={`/download/${submission.id}`} style={{ textDecoration: 'none' }}>
-              <Button
-                variant="secondary"
-                icon={<Download />}
-              >
-                View CV
-              </Button>
-            </Link>
+            {submission.existing_cv_url && (
+              <a href={submission.existing_cv_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                <Button
+                  variant="secondary"
+                  icon={<Download />}
+                >
+                  View CV
+                </Button>
+              </a>
+            )}
           </div>
         </div>
 
@@ -230,39 +223,43 @@ export default function SubmissionDetail() {
                   <div className="info-item">
                     <div className="info-item__label">Email Address</div>
                     <a
-                      href={`mailto:${submission.email}`}
+                      href={`mailto:${submission.client.email}`}
                       className="info-item__value info-item__value--link"
                     >
-                      {submission.email}
+                      {submission.client.email}
                     </a>
                   </div>
                   <div className="info-item">
                     <div className="info-item__label">Phone Number</div>
-                    <a
-                      href={`tel:${submission.phone}`}
-                      className="info-item__value info-item__value--link"
-                    >
-                      {submission.phone}
-                    </a>
+                    {submission.client.phone ? (
+                      <a
+                        href={`tel:${submission.client.phone}`}
+                        className="info-item__value info-item__value--link"
+                      >
+                        {submission.client.phone}
+                      </a>
+                    ) : (
+                      <div className="info-item__value" style={{ color: 'var(--color-text-tertiary)' }}>Not provided</div>
+                    )}
                   </div>
                   <div className="info-item">
                     <div className="info-item__label">Target Role</div>
-                    <div className="info-item__value">{submission.targetRole}</div>
+                    <div className="info-item__value">{submission.target_position}</div>
                   </div>
                   <div className="info-item">
                     <div className="info-item__label">Target Company</div>
-                    <div className="info-item__value">{submission.targetCompany}</div>
+                    <div className="info-item__value">{submission.target_company || 'Not specified'}</div>
                   </div>
                   <div className="info-item">
                     <div className="info-item__label">Submission Date</div>
                     <div className="info-item__value">
-                      {format(submission.submittedAt, 'PPP p')}
+                      {format(parseISO(submission.created_at), 'PPP p')}
                     </div>
                   </div>
                   <div className="info-item">
                     <div className="info-item__label">Has Existing CV</div>
                     <div className="info-item__value">
-                      {submission.hasExistingCV ? 'Yes' : 'No'}
+                      {submission.existing_cv_url ? 'Yes' : 'No'}
                     </div>
                   </div>
                 </div>
@@ -274,25 +271,44 @@ export default function SubmissionDetail() {
               <Card.Header title="Activity Timeline" icon={<Calendar />} />
               <Card.Body>
                 <div className="timeline">
-                  {MOCK_TIMELINE.map((activity, index) => (
-                    <div key={index} className={`timeline__item timeline__item--${activity.type}`}>
-                      <div className="timeline__icon">{activity.icon}</div>
-                      <div className="timeline__content">
-                        <div className="timeline__title">{activity.title}</div>
-                        <div className="timeline__description">{activity.description}</div>
-                        <div className="timeline__meta">
-                          {formatDistanceToNow(activity.timestamp, { addSuffix: true })} •{' '}
-                          {format(activity.timestamp, 'PPP p')}
+                  {submission.activities && submission.activities.length > 0 ? (
+                    submission.activities.map((activity, index) => (
+                      <div key={activity.id} className="timeline__item">
+                        <div className="timeline__icon">{activity.activity_type === 'status_changed' ? <Play size={16} /> : activity.activity_type === 'assigned' ? <UserPlus size={16} /> : <FileText size={16} />}</div>
+                        <div className="timeline__content">
+                          <div className="timeline__title">{activity.title}</div>
+                          <div className="timeline__description">{activity.description}</div>
+                          <div className="timeline__meta">
+                            {formatDistanceToNow(parseISO(activity.created_at), { addSuffix: true })} •{' '}
+                            {format(parseISO(activity.created_at), 'PPP p')}
+                            {activity.actor_name && ` • by ${activity.actor_name}`}
+                          </div>
                         </div>
                       </div>
+                    ))
+                  ) : (
+                    <div style={{ padding: 'var(--space-3)', textAlign: 'center', color: 'var(--color-text-tertiary)' }}>
+                      No activities yet
                     </div>
-                  ))}
+                  )}
                 </div>
               </Card.Body>
             </Card>
 
+            {/* Job Description */}
+            {submission.job_description && (
+              <Card>
+                <Card.Header title="Job Description" icon={<Briefcase />} />
+                <Card.Body>
+                  <div style={{ fontSize: 'var(--text-sm)', lineHeight: '1.6', color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    {submission.job_description}
+                  </div>
+                </Card.Body>
+              </Card>
+            )}
+
             {/* Files */}
-            {submission.hasExistingCV && (
+            {submission.existing_cv_url && (
               <Card>
                 <Card.Header title="Attached Files" icon={<FileText />} />
                 <Card.Body>
@@ -303,9 +319,11 @@ export default function SubmissionDetail() {
                       </div>
                       <div className="file-item__info">
                         <div className="file-item__name">existing-cv.pdf</div>
-                        <div className="file-item__meta">2.4 MB • Uploaded {formatDistanceToNow(submission.submittedAt, { addSuffix: true })}</div>
+                        <div className="file-item__meta">Uploaded {formatDistanceToNow(parseISO(submission.created_at), { addSuffix: true })}</div>
                       </div>
-                      <Button variant="ghost" size="sm" icon={<Download />} />
+                      <a href={submission.existing_cv_url} target="_blank" rel="noopener noreferrer">
+                        <Button variant="ghost" size="sm" icon={<Download />} />
+                      </a>
                     </div>
                   </div>
                 </Card.Body>
@@ -320,37 +338,55 @@ export default function SubmissionDetail() {
               <Card.Header title="Assignment" icon={<UserPlus />} />
               <Card.Body>
                 <div className="assign-section">
-                  {submission.assignedTo ? (
+                  {submission.assigned_to ? (
                     <div className="assign-current">
-                      <Avatar fallback={submission.assignedTo.name} size="md" />
+                      <Avatar fallback={`${submission.assigned_to.first_name} ${submission.assigned_to.last_name}`} size="md" />
                       <div className="assign-current__info">
-                        <div className="assign-current__name">{submission.assignedTo.name}</div>
-                        <div className="assign-current__role">
-                          {submission.assignedTo.name.includes('Admin') ? 'admin' : 'sub_admin'}
-                        </div>
+                        <div className="assign-current__name">{submission.assigned_to.first_name} {submission.assigned_to.last_name}</div>
+                        <div className="assign-current__role">{submission.assigned_to.role}</div>
                       </div>
                     </div>
                   ) : (
-                    <div style={{ padding: 'var(--space-3)', textAlign: 'center', color: 'var(--color-text-tertiary)', fontSize: 'var(--text-sm)' }}>
+                    <div className="assign-empty">
                       Not assigned yet
                     </div>
                   )}
                   <div className="assign-form">
-                    <Select
-                      value={selectedStaff}
-                      onChange={(e) => setSelectedStaff(e.target.value)}
-                      style={{ flex: 1 }}
-                    >
-                      <option value="">Select Staff</option>
-                      {staff.map((member) => (
-                        <option key={member.id} value={member.id}>
-                          {member.name}
-                        </option>
-                      ))}
-                    </Select>
-                    <Button variant="primary" size="sm" onClick={handleAssign}>
-                      Assign
-                    </Button>
+                    <div className="staff-dropdown">
+                      <label className="staff-dropdown__label">Assign to Staff Member</label>
+                      <select
+                        value={selectedStaff}
+                        onChange={(e) => setSelectedStaff(e.target.value)}
+                        className="staff-dropdown__select"
+                      >
+                        <option value="">Select a staff member...</option>
+                        {staff.map((member) => (
+                          <option key={member.id} value={member.id}>
+                            {member.first_name} {member.last_name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                      <Button 
+                        variant="primary" 
+                        size="sm" 
+                        onClick={handleAssign}
+                        disabled={!selectedStaff}
+                        style={{ flex: 1 }}
+                      >
+                        Assign
+                      </Button>
+                      {submission.assigned_to && (
+                        <Button 
+                          variant="secondary" 
+                          size="sm" 
+                          onClick={handleUnassign}
+                        >
+                          Unassign
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </Card.Body>

@@ -47,7 +47,7 @@ export const fetchSubmissionById = async (id) => {
  */
 export const updateSubmissionStatus = async (id, status) => {
   try {
-    const response = await authApi.patch(`/submissions/${id}`, { status })
+    const response = await authApi.patch(`/submissions/${id}/status`, { status })
     return response.data.data
   } catch (error) {
     const message = error.response?.data?.message || error.message
@@ -61,6 +61,32 @@ export const updateSubmissionStatus = async (id, status) => {
 export const assignSubmission = async (id, staffId) => {
   try {
     const response = await authApi.patch(`/submissions/${id}/assign`, { assigned_to_id: staffId })
+    return response.data.data
+  } catch (error) {
+    const message = error.response?.data?.message || error.message
+    throw new Error(message)
+  }
+}
+
+/**
+ * Unassign submission from staff
+ */
+export const unassignSubmission = async (id) => {
+  try {
+    const response = await authApi.patch(`/submissions/${id}/unassign`)
+    return response.data.data
+  } catch (error) {
+    const message = error.response?.data?.message || error.message
+    throw new Error(message)
+  }
+}
+
+/**
+ * Delete a submission
+ */
+export const deleteSubmission = async (id) => {
+  try {
+    const response = await authApi.delete(`/submissions/${id}`)
     return response.data.data
   } catch (error) {
     const message = error.response?.data?.message || error.message
