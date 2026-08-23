@@ -22,7 +22,8 @@ authApi.interceptors.request.use((config) => {
 authApi.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // Only redirect on 401 for non-auth endpoints
+    if (error.response?.status === 401 && !error.config?.url?.includes('/auth/')) {
       localStorage.removeItem('admin_token')
       localStorage.removeItem('admin_user')
       window.location.href = '/login'

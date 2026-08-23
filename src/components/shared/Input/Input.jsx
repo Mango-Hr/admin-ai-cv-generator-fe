@@ -20,6 +20,7 @@ const Input = forwardRef(({
   helpText,
   icon,
   size = 'md',
+  hideErrorBorder = false,
   className = '',
   ...props
 }, ref) => {
@@ -29,7 +30,7 @@ const Input = forwardRef(({
   const wrapperClasses = [
     'input-wrapper',
     `input-wrapper--${size}`,
-    hasError && 'input-wrapper--error',
+    hasError && !hideErrorBorder && 'input-wrapper--error',
     className,
   ].filter(Boolean).join(' ')
 

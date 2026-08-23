@@ -51,6 +51,9 @@ export default function SubmissionDetail() {
   const [selectedStatus, setSelectedStatus] = useState('')
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [assigningStaffId, setAssigningStaffId] = useState(null)
+  const [glowingStatus, setGlowingStatus] = useState(null)
+  const [showAllActivities, setShowAllActivities] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -89,35 +92,54 @@ export default function SubmissionDetail() {
       return
     }
 
+    setAssigningStaffId(selectedStaff)
+
     try {
-      await assignSubmission(id, selectedStaff)
+      const updatedSubmission = await assignSubmission(id, selectedStaff)
       const staffMember = staff.find(s => s.id === selectedStaff)
+      
+      // Update local state instead of reloading
+      setSubmission(updatedSubmission)
       toast.success(`Assigned to ${staffMember.first_name} ${staffMember.last_name}`)
-      loadData()
     } catch (error) {
       toast.error('Failed to assign submission')
       console.error(error)
+    } finally {
+      setAssigningStaffId(null)
     }
   }
 
   const handleUnassign = async () => {
+    setAssigningStaffId('unassign')
+
     try {
-      await unassignSubmission(id)
-      toast.success('Submission unassigned successfully')
+      const updatedSubmission = await unassignSubmission(id)
+      
+      // Update local state instead of reloading
+      setSubmission(updatedSubmission)
       setSelectedStaff('')
-      loadData()
+      toast.success('Submission unassigned successfully')
     } catch (error) {
       toast.error('Failed to unassign submission')
       console.error(error)
+    } finally {
+      setAssigningStaffId(null)
     }
   }
 
   const handleStatusChange = async (newStatus) => {
     try {
-      await updateSubmissionStatus(id, newStatus)
+      const updatedSubmission = await updateSubmissionStatus(id, newStatus)
+      
+      // Update local state instead of reloading
+      setSubmission(updatedSubmission)
       setSelectedStatus(newStatus)
+      
+      // Add glow effect to the button for 2 seconds
+      setGlowingStatus(newStatus)
+      setTimeout(() => setGlowingStatus(null), 2000)
+      
       toast.success('Status updated successfully')
-      loadData()
     } catch (error) {
       toast.error('Failed to update status')
       console.error(error)
@@ -272,20 +294,41 @@ export default function SubmissionDetail() {
               <Card.Body>
                 <div className="timeline">
                   {submission.activities && submission.activities.length > 0 ? (
-                    submission.activities.map((activity, index) => (
-                      <div key={activity.id} className="timeline__item">
-                        <div className="timeline__icon">{activity.activity_type === 'status_changed' ? <Play size={16} /> : activity.activity_type === 'assigned' ? <UserPlus size={16} /> : <FileText size={16} />}</div>
-                        <div className="timeline__content">
-                          <div className="timeline__title">{activity.title}</div>
-                          <div className="timeline__description">{activity.description}</div>
-                          <div className="timeline__meta">
-                            {formatDistanceToNow(parseISO(activity.created_at), { addSuffix: true })} •{' '}
-                            {format(parseISO(activity.created_at), 'PPP p')}
-                            {activity.actor_name && ` • by ${activity.actor_name}`}
+                    <>
+                      {submission.activities.slice(0, showAllActivities ? submission.activities.length : 4).map((activity, index) => (
+                        <div key={activity.id} className={`timeline__item timeline__item--${activity.activity_type === 'status_changed' ? 'progress' : activity.activity_type === 'assigned' ? 'assigned' : 'created'}`}>
+                          <div className="timeline__icon">
+                            {activity.activity_type === 'status_changed' ? (
+                              <Play size={20} />
+                            ) : activity.activity_type === 'assigned' ? (
+                              <UserPlus size={20} />
+                            ) : (
+                              <FileText size={20} />
+                            )}
+                          </div>
+                          <div className="timeline__content">
+                            <div className="timeline__title">{activity.title}</div>
+                            <div className="timeline__description">{activity.description}</div>
+                            <div className="timeline__meta">
+                              {formatDistanceToNow(parseISO(activity.created_at), { addSuffix: true })} •{' '}
+                              {format(parseISO(activity.created_at), 'PPP p')}
+                              {activity.actor_name && ` • by ${activity.actor_name}`}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))
+                      ))}
+                      
+                      {submission.activities.length > 4 && (
+                        <div className="timeline__toggle">
+                          <button 
+                            className="timeline__toggle-btn"
+                            onClick={() => setShowAllActivities(!showAllActivities)}
+                          >
+                            {showAllActivities ? '↑ Show Less' : '↓ Show More'}
+                          </button>
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <div style={{ padding: 'var(--space-3)', textAlign: 'center', color: 'var(--color-text-tertiary)' }}>
                       No activities yet
@@ -372,7 +415,8 @@ export default function SubmissionDetail() {
                         variant="primary" 
                         size="sm" 
                         onClick={handleAssign}
-                        disabled={!selectedStaff}
+                        disabled={!selectedStaff || assigningStaffId}
+                        loading={assigningStaffId === selectedStaff}
                         style={{ flex: 1 }}
                       >
                         Assign
@@ -382,6 +426,8 @@ export default function SubmissionDetail() {
                           variant="secondary" 
                           size="sm" 
                           onClick={handleUnassign}
+                          disabled={assigningStaffId}
+                          loading={assigningStaffId === 'unassign'}
                         >
                           Unassign
                         </Button>
@@ -409,7 +455,7 @@ export default function SubmissionDetail() {
                         key={option.value}
                         className={`status-button status-button--${option.color} ${
                           selectedStatus === option.value ? 'status-button--active' : ''
-                        }`}
+                        } ${glowingStatus === option.value ? 'status-button--glow' : ''}`}
                         onClick={() => handleStatusChange(option.value)}
                       >
                         {option.label}

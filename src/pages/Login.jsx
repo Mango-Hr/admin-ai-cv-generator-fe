@@ -29,7 +29,7 @@ export default function Login() {
     if (isAuthenticated()) {
       navigate('/admin')
     }
-  }, [isAuthenticated, navigate])
+  }, [])
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -37,8 +37,9 @@ export default function Login() {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }))
-    // Clear error for this field when user starts typing
-    if (errors[name]) {
+    // Clear error for this field only when user starts typing in that field
+    // unless it's a generic API error (like invalid credentials)
+    if (errors[name] && !errors.password?.includes('invalid') && !errors.email?.includes('invalid')) {
       setErrors(prev => ({
         ...prev,
         [name]: ''
@@ -78,6 +79,7 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    e.stopPropagation()
 
     if (!validateForm()) {
       return
@@ -92,8 +94,8 @@ export default function Login() {
     } catch (error) {
       const { userMessage, technicalError } = getUserFriendlyError(error.message)
       logTechnicalError('Login', technicalError)
-      toast.error(userMessage)
-    } finally {
+      // Show error inline on password field instead of toast
+      setErrors({ password: userMessage })
       setLoading(false)
     }
   }
@@ -151,6 +153,7 @@ export default function Login() {
                 onChange={handleChange}
                 icon={<Lock />}
                 error={errors.password}
+                hideErrorBorder={true}
                 autoComplete="current-password"
               />
               <button
