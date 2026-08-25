@@ -3,7 +3,9 @@
  * Handles WebSocket connections and REST API calls for real-time messaging
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://ai-cv-generator-be-production.up.railway.app'
+
+console.log('[ChatService] Initialized with API_BASE_URL:', API_BASE_URL)
 
 class ChatService {
   constructor() {
