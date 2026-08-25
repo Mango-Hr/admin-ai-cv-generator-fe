@@ -44,7 +44,7 @@ export const createAdmin = async (userData) => {
       password: userData.password,
       phone: userData.phone,
       gender: userData.gender,
-      role: 'super_admin', // Currently creating as super_admin with full admin permissions
+      role: 'sub_admin', // Currently creating as super_admin with full admin permissions
     })
     
     console.log('[createAdmin Response]', response.data.data) // Debug log
