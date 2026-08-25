@@ -61,11 +61,14 @@ export default function Chat({ submissionId, jwtToken, staffName = 'Support' }) 
         setIsLoading(true)
         setError(null)
 
+        console.log('[Chat] Initializing with submissionId:', submissionId, 'token present:', !!jwtToken)
+
         // Connect WebSocket
         await chatService.connect(submissionId, jwtToken)
 
         // Fetch message history
         const history = await chatService.fetchMessages(submissionId, jwtToken)
+        console.log('[Chat] Loaded', history.length, 'messages')
         setMessages(history)
 
         // Mark as read
@@ -79,8 +82,9 @@ export default function Chat({ submissionId, jwtToken, staffName = 'Support' }) 
 
         setIsLoading(false)
       } catch (err) {
-        console.error('Failed to initialize chat:', err)
-        setError('Failed to connect to chat. Please try again.')
+        console.error('[Chat] Initialization error:', err)
+        const errorMessage = err.message || 'Failed to connect to chat'
+        setError(errorMessage)
         setIsLoading(false)
       }
     }
@@ -303,7 +307,19 @@ export default function Chat({ submissionId, jwtToken, staffName = 'Support' }) 
       {/* Error Message */}
       {error && (
         <div className="chat__error">
-          {error}
+          <div style={{ marginBottom: 'var(--space-2)' }}>
+            <strong>Connection Error:</strong> {error}
+          </div>
+          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
+            <p>Check browser console (F12) for detailed error logs.</p>
+            <p>Common issues:</p>
+            <ul style={{ marginLeft: 'var(--space-4)', marginTop: 'var(--space-1)' }}>
+              <li>Backend server not running</li>
+              <li>Invalid JWT token</li>
+              <li>CORS/WebSocket configuration issue</li>
+              <li>Network connectivity problem</li>
+            </ul>
+          </div>
         </div>
       )}
 

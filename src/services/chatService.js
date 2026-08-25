@@ -25,14 +25,22 @@ class ChatService {
   connect(submissionId, jwtToken) {
     return new Promise((resolve, reject) => {
       try {
+        if (!submissionId || !jwtToken) {
+          const error = `Missing required parameters: submissionId=${submissionId}, jwtToken=${jwtToken ? 'present' : 'missing'}`
+          console.error('[ChatService] Connection Error:', error)
+          reject(new Error(error))
+          return
+        }
+
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-        const wsUrl = `${wsProtocol}//${API_BASE_URL.replace('https://', '').replace('http://', '')}/api/v1/admin/submissions/${submissionId}/ws?token=${jwtToken}`
+        const host = API_BASE_URL.replace('https://', '').replace('http://', '').split('/')[0]
+        const wsUrl = `${wsProtocol}//${host}/api/v1/admin/submissions/${submissionId}/ws?token=${jwtToken}`
         
-        console.log('Connecting to WebSocket:', wsUrl)
+        console.log('[ChatService] Connecting to:', wsUrl)
         this.ws = new WebSocket(wsUrl)
 
         this.ws.onopen = () => {
-          console.log('WebSocket connected')
+          console.log('[ChatService] WebSocket connected successfully')
           this.reconnectAttempts = 0
           this.startPingInterval()
           this.notifyConnectionListeners('connected')
@@ -42,34 +50,37 @@ class ChatService {
         this.ws.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data)
+            console.log('[ChatService] Message received:', data.event)
             this.handleMessage(data)
           } catch (error) {
-            console.error('Error parsing WebSocket message:', error)
+            console.error('[ChatService] Error parsing WebSocket message:', error)
           }
         }
 
         this.ws.onerror = (error) => {
-          console.error('WebSocket error:', error)
+          console.error('[ChatService] WebSocket error:', error)
           this.notifyConnectionListeners('error')
           reject(error)
         }
 
         this.ws.onclose = (event) => {
-          console.log('WebSocket closed:', event.code, event.reason)
+          console.log('[ChatService] WebSocket closed:', event.code, event.reason)
           this.stopPingInterval()
           this.notifyConnectionListeners('closed')
 
           // Handle reconnection based on close code
           if (event.code === 4001) {
             // Authentication failed - don't retry
-            console.error('Authentication failed')
+            console.error('[ChatService] Authentication failed (code 4001)')
             this.notifyConnectionListeners('auth_failed')
           } else if (event.code !== 1000) {
             // Unexpected close - attempt reconnection
+            console.warn('[ChatService] Unexpected close, attempting reconnection')
             this.attemptReconnect(submissionId, jwtToken)
           }
         }
       } catch (error) {
+        console.error('[ChatService] Connection setup error:', error)
         reject(error)
       }
     })

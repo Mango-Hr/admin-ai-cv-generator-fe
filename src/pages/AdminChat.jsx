@@ -78,11 +78,13 @@ export default function AdminChat() {
 
         {/* Chat Container */}
         <div className="admin-chat__container">
-          <Chat 
-            submissionId={submission.id}
-            jwtToken={localStorage.getItem('admin_token')}
-            staffName={`${user.first_name} ${user.last_name}`}
-          />
+          {user && (
+            <Chat 
+              submissionId={submission.id}
+              jwtToken={localStorage.getItem('admin_token')}
+              staffName={`${user.first_name} ${user.last_name}`}
+            />
+          )}
         </div>
       </div>
     </AdminLayout>

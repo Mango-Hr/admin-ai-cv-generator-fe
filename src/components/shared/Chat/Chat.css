@@ -437,6 +437,8 @@
   border-radius: var(--radius-md);
   color: rgb(220, 38, 38);
   font-size: var(--text-sm);
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 /* Responsive */
