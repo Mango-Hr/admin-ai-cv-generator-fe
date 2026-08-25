@@ -29,7 +29,7 @@ const NAV_ITEMS = [
     section: 'Main',
     items: [
       { path: '/admin', icon: <LayoutDashboard />, label: 'Dashboard', roles: ['super_admin', 'sub_admin'] },
-      { path: '/admin/submissions', icon: <FileStack />, label: 'Submissions', badge: null, roles: ['super_admin'] },
+      { path: '/admin/submissions', icon: <FileStack />, label: 'Submissions', badge: null, roles: ['super_admin', 'sub_admin'] },
       { path: '/admin/tasks', icon: <CheckSquare />, label: 'My Tasks', badge: 5, roles: ['super_admin', 'sub_admin'] },
     ],
   },
