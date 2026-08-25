@@ -429,17 +429,6 @@
   color: var(--color-text-secondary);
 }
 
-/* Error State */
-.chat__error {
-  padding: var(--space-4);
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  border-radius: var(--radius-md);
-  color: rgb(220, 38, 38);
-  font-size: var(--text-sm);
-  max-height: 300px;
-  overflow-y: auto;
-}
 
 /* Responsive */
 @media (max-width: 768px) {

@@ -304,24 +304,7 @@ export default function Chat({ submissionId, jwtToken, staffName = 'Support' }) 
         )}
       </div>
 
-      {/* Error Message */}
-      {error && (
-        <div className="chat__error">
-          <div style={{ marginBottom: 'var(--space-2)' }}>
-            <strong>Connection Error:</strong> {error}
-          </div>
-          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
-            <p>Check browser console (F12) for detailed error logs.</p>
-            <p>Common issues:</p>
-            <ul style={{ marginLeft: 'var(--space-4)', marginTop: 'var(--space-1)' }}>
-              <li>Backend server not running</li>
-              <li>Invalid JWT token</li>
-              <li>CORS/WebSocket configuration issue</li>
-              <li>Network connectivity problem</li>
-            </ul>
-          </div>
-        </div>
-      )}
+
 
       {/* Input Area */}
       <div className="chat__input-area">
