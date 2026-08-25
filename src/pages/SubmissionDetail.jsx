@@ -27,7 +27,6 @@ import { default as Avatar } from '../components/shared/Avatar'
 import { Select } from '../components/shared/Input'
 import Skeleton from '../components/shared/Skeleton'
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '../components/shared/Modal/Modal'
-import Chat from '../components/shared/Chat'
 import { useToast } from '../contexts/ToastContext'
 import { useAuth } from '../contexts/AuthContext'
 import { fetchSubmissionById, updateSubmissionStatus, assignSubmission, unassignSubmission, deleteSubmission } from '../services/submissionsService'
@@ -211,7 +210,7 @@ export default function SubmissionDetail() {
             </div>
           </div>
           <div className="submission-detail__actions">
-            <Link to={`/chat/${submission.reference_id}`} style={{ textDecoration: 'none' }}>
+            <Link to={`/admin/chat/${submission.reference_id}`} style={{ textDecoration: 'none' }}>
               <Button
                 variant="primary"
                 icon={<MessageSquare />}
@@ -338,18 +337,6 @@ export default function SubmissionDetail() {
                     </div>
                   )}
                 </div>
-              </Card.Body>
-            </Card>
-
-            {/* Chat Section */}
-            <Card>
-              <Card.Header title="Client Communication" icon={<MessageSquare />} />
-              <Card.Body style={{ padding: 0, height: '500px' }}>
-                <Chat 
-                  submissionId={submission.id}
-                  jwtToken={localStorage.getItem('admin_token')}
-                  staffName={`${user.first_name} ${user.last_name}`}
-                />
               </Card.Body>
             </Card>
 
@@ -487,7 +474,7 @@ export default function SubmissionDetail() {
               <Card.Body>
                 <div className="quick-actions-list">
                   <Link
-                    to={`/chat/${submission.id}`}
+                    to={`/admin/chat/${submission.reference_id}`}
                     className="quick-action-btn quick-action-btn--blue"
                   >
                     <MessageSquare className="quick-action-btn__icon" />

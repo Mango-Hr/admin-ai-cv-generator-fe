@@ -7,6 +7,7 @@ import Signup from './pages/Signup'
 import AdminDashboard from './pages/AdminDashboard'
 import SubmissionsList from './pages/SubmissionsList'
 import SubmissionDetail from './pages/SubmissionDetail'
+import AdminChat from './pages/AdminChat'
 import TaskManagement from './pages/TaskManagement'
 import StaffManagement from './pages/StaffManagement'
 import PromptManagement from './pages/PromptManagement'
@@ -93,6 +94,14 @@ function App() {
               element={
                 <ProtectedRoute requireRole="super_admin">
                   <SubmissionDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/chat/:referenceId"
+              element={
+                <ProtectedRoute requireRole="super_admin">
+                  <AdminChat />
                 </ProtectedRoute>
               }
             />
