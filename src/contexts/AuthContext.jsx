@@ -65,10 +65,10 @@ export function AuthProvider({ children }) {
   }
 
   /**
-   * Check if user has specific role
+   * Check if user has specific role(s)
    * super_admin has all permissions (can access everything)
    */
-  const hasRole = (role) => {
+  const hasRole = (roles) => {
     if (!user) return false
     
     // super_admin has access to everything
@@ -76,12 +76,10 @@ export function AuthProvider({ children }) {
       return true
     }
     
-    // sub_admin can only access sub_admin pages
-    if (role === 'sub_admin') {
-      return user.role === 'sub_admin'
-    }
+    // Handle array of roles or single role
+    const rolesArray = Array.isArray(roles) ? roles : [roles]
     
-    return false
+    return rolesArray.includes(user.role)
   }
 
   /**

@@ -84,7 +84,7 @@ function App() {
             <Route
               path="/admin/submissions"
               element={
-                <ProtectedRoute requireRole="super_admin">
+                <ProtectedRoute requireRole={['super_admin', 'sub_admin']}>
                   <SubmissionsList />
                 </ProtectedRoute>
               }
@@ -92,7 +92,7 @@ function App() {
             <Route
               path="/admin/submissions/:id"
               element={
-                <ProtectedRoute requireRole="super_admin">
+                <ProtectedRoute requireRole={['super_admin', 'sub_admin']}>
                   <SubmissionDetail />
                 </ProtectedRoute>
               }
