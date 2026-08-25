@@ -28,11 +28,11 @@ class ChatService {
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
         const wsUrl = `${wsProtocol}//${API_BASE_URL.replace('https://', '').replace('http://', '')}/api/v1/admin/submissions/${submissionId}/ws?token=${jwtToken}`
         
-        console.log('Admin connecting to WebSocket:', wsUrl)
+        console.log('Connecting to WebSocket:', wsUrl)
         this.ws = new WebSocket(wsUrl)
 
         this.ws.onopen = () => {
-          console.log('Admin WebSocket connected')
+          console.log('WebSocket connected')
           this.reconnectAttempts = 0
           this.startPingInterval()
           this.notifyConnectionListeners('connected')
@@ -49,13 +49,13 @@ class ChatService {
         }
 
         this.ws.onerror = (error) => {
-          console.error('Admin WebSocket error:', error)
+          console.error('WebSocket error:', error)
           this.notifyConnectionListeners('error')
           reject(error)
         }
 
         this.ws.onclose = (event) => {
-          console.log('Admin WebSocket closed:', event.code, event.reason)
+          console.log('WebSocket closed:', event.code, event.reason)
           this.stopPingInterval()
           this.notifyConnectionListeners('closed')
 
@@ -88,7 +88,7 @@ class ChatService {
     this.reconnectAttempts++
     const delay = Math.min(this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1), 30000)
     
-    console.log(`Admin reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`)
+    console.log(`Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`)
     
     setTimeout(() => {
       this.connect(submissionId, jwtToken).catch(error => {

@@ -27,7 +27,9 @@ import { default as Avatar } from '../components/shared/Avatar'
 import { Select } from '../components/shared/Input'
 import Skeleton from '../components/shared/Skeleton'
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '../components/shared/Modal/Modal'
+import Chat from '../components/shared/Chat'
 import { useToast } from '../contexts/ToastContext'
+import { useAuth } from '../contexts/AuthContext'
 import { fetchSubmissionById, updateSubmissionStatus, assignSubmission, unassignSubmission, deleteSubmission } from '../services/submissionsService'
 import { fetchStaffList } from '../services/staffService'
 import './SubmissionDetail.css'
@@ -43,6 +45,7 @@ export default function SubmissionDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { toast } = useToast()
+  const { user } = useAuth()
   
   const [loading, setLoading] = useState(true)
   const [submission, setSubmission] = useState(null)
@@ -335,6 +338,18 @@ export default function SubmissionDetail() {
                     </div>
                   )}
                 </div>
+              </Card.Body>
+            </Card>
+
+            {/* Chat Section */}
+            <Card>
+              <Card.Header title="Client Communication" icon={<MessageSquare />} />
+              <Card.Body style={{ padding: 0, height: '500px' }}>
+                <Chat 
+                  submissionId={submission.id}
+                  jwtToken={localStorage.getItem('admin_token')}
+                  staffName={`${user.first_name} ${user.last_name}`}
+                />
               </Card.Body>
             </Card>
 
