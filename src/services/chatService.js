@@ -236,6 +236,12 @@ class ChatService {
    */
   onConnectionChange(listener) {
     this.connectionListeners.push(listener)
+    
+    // If already connected, notify immediately
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      listener('connected')
+    }
+    
     return () => {
       this.connectionListeners = this.connectionListeners.filter(l => l !== listener)
     }

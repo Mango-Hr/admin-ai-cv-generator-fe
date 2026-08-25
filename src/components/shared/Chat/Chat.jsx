@@ -141,7 +141,7 @@ export default function Chat({ submissionId, jwtToken, staffName = 'Support' }) 
   }, [submissionId, jwtToken])
 
   const handleConnectionChange = useCallback((status) => {
-    console.log('Connection status:', status)
+    console.log('[Chat] Connection status changed to:', status)
     setIsConnected(status === 'connected')
     if (status === 'auth_failed') {
       setError('Authentication failed. Please log in again.')
