@@ -408,7 +408,7 @@ export default function TaskManagement() {
         {/* New Task Form Modal */}
         {showNewTaskForm && (
           <div className="modal-overlay" onClick={() => setShowNewTaskForm(false)}>
-            <Card className="new-task-modal">
+            <Card className="new-task-modal" onClick={(e) => e.stopPropagation()}>
               <Card.Header title="Create New Task" />
               <Card.Body>
                 <form onSubmit={handleCreateTask} className="new-task-form">
