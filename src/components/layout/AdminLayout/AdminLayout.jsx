@@ -99,6 +99,10 @@ export default function AdminLayout({ children }) {
 
     if (user) {
       fetchTaskCount()
+      
+      // Refresh task count every 30 seconds to keep it in sync
+      const interval = setInterval(fetchTaskCount, 30000)
+      return () => clearInterval(interval)
     }
   }, [user])
   
