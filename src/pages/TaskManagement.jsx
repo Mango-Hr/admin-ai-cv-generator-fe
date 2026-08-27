@@ -16,6 +16,7 @@ import Card from '../components/shared/Card'
 import Button from '../components/shared/Button'
 import Badge from '../components/shared/Badge'
 import { Input, Select } from '../components/shared/Input'
+import Skeleton from '../components/shared/Skeleton'
 import { useToast } from '../contexts/ToastContext'
 import { getTasks, getTaskMetrics, createTask, updateTaskStatus, updateTask, deleteTask } from '../services/tasksService'
 import './TaskManagement.css'
@@ -164,7 +165,64 @@ export default function TaskManagement() {
   if (loading) {
     return (
       <AdminLayout>
-        <div style={{ padding: 'var(--space-6)' }}>Loading tasks...</div>
+        <div className="task-management">
+          {/* Header Skeleton */}
+          <div className="task-management__header">
+            <div className="task-management__title-section">
+              <Skeleton width="40%" height={40} style={{ marginBottom: 'var(--space-2)' }} />
+              <Skeleton width="60%" height={16} />
+            </div>
+            <Skeleton width={100} height={40} />
+          </div>
+
+          {/* Metrics Skeleton */}
+          <div className="task-management__metrics">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="metric-card">
+                <Skeleton width="70%" height={14} style={{ marginBottom: 'var(--space-2)' }} />
+                <Skeleton width="40%" height={32} />
+              </div>
+            ))}
+          </div>
+
+          {/* Filters Skeleton */}
+          <div className="task-management__filters">
+            <div className="filter-group">
+              <Skeleton width="60px" height={14} style={{ marginBottom: 'var(--space-2)' }} />
+              <Skeleton width="100%" height={40} />
+            </div>
+            <div className="filter-group">
+              <Skeleton width="60px" height={14} style={{ marginBottom: 'var(--space-2)' }} />
+              <Skeleton width="100%" height={40} />
+            </div>
+          </div>
+
+          {/* Kanban Board Skeleton */}
+          <div className="kanban-board">
+            {[...Array(4)].map((_, colIndex) => (
+              <div key={colIndex} className="kanban-column">
+                <div className="kanban-column__header">
+                  <Skeleton width="80%" height={24} />
+                </div>
+                <div className="kanban-column__content">
+                  {[...Array(3)].map((_, cardIndex) => (
+                    <div key={cardIndex} style={{ 
+                      padding: 'var(--space-3)', 
+                      border: '1px solid var(--color-border)', 
+                      borderRadius: 'var(--radius-md)', 
+                      marginBottom: 'var(--space-2)',
+                      background: 'var(--color-bg-secondary)'
+                    }}>
+                      <Skeleton width="90%" height={18} style={{ marginBottom: 'var(--space-2)' }} />
+                      <Skeleton width="100%" height={14} style={{ marginBottom: 'var(--space-2)' }} />
+                      <Skeleton width="60%" height={14} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </AdminLayout>
     )
   }
