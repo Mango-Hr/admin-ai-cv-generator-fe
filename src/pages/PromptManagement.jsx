@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react'
 import {
   Plus,
   Search,
-  Filter,
   Edit2,
   Trash2,
   ToggleLeft,
   ToggleRight,
   AlertCircle,
+  X,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import AdminLayout from '../components/layout/AdminLayout'
@@ -15,6 +15,7 @@ import Card from '../components/shared/Card'
 import Button from '../components/shared/Button'
 import Badge from '../components/shared/Badge'
 import { Input, Select } from '../components/shared/Input'
+import Skeleton from '../components/shared/Skeleton'
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '../components/shared/Modal/Modal'
 import { useToast } from '../contexts/ToastContext'
 import { getPrompts, getPromptStats, createPrompt, updatePrompt, activatePrompt, deactivatePrompt, deletePrompt } from '../services/promptService'
@@ -31,6 +32,7 @@ export default function PromptManagement() {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [showNewPromptForm, setShowNewPromptForm] = useState(false)
   const [editingPrompt, setEditingPrompt] = useState(null)
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null)
   const [formData, setFormData] = useState({
     title: '',
     target_position: '',
@@ -39,6 +41,8 @@ export default function PromptManagement() {
     description: '',
     is_active: true,
   })
+  const [errors, setErrors] = useState({})
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -66,17 +70,64 @@ export default function PromptManagement() {
 
   const handleSearchChange = (value) => {
     setSearchTerm(value)
-    // Debounce search
     setTimeout(() => loadData(), 300)
+  }
+
+  const validateForm = () => {
+    const newErrors = {}
+
+    if (!formData.title.trim()) {
+      newErrors.title = 'Prompt title is required'
+    }
+
+    if (!formData.prompt_text.trim()) {
+      newErrors.prompt_text = 'Prompt text is required'
+    }
+
+    if (!formData.category) {
+      newErrors.category = 'Category is required'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleFieldChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+    // Clear error for this field
+    if (errors[field]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: ''
+      }))
+    }
+  }
+
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      target_position: '',
+      category: 'general',
+      prompt_text: '',
+      description: '',
+      is_active: true,
+    })
+    setErrors({})
+    setEditingPrompt(null)
+    setShowNewPromptForm(false)
   }
 
   const handleCreateOrUpdate = async (e) => {
     e.preventDefault()
 
-    if (!formData.title.trim() || !formData.prompt_text.trim()) {
-      toast.error('Please fill in all required fields')
+    if (!validateForm()) {
       return
     }
+
+    setSubmitting(true)
 
     try {
       let result
@@ -89,21 +140,13 @@ export default function PromptManagement() {
         setPrompts(prev => [result, ...prev])
         toast.success('Prompt created successfully')
       }
-
-      setFormData({
-        title: '',
-        target_position: '',
-        category: 'general',
-        prompt_text: '',
-        description: '',
-        is_active: true,
-      })
-      setEditingPrompt(null)
-      setShowNewPromptForm(false)
+      resetForm()
       loadData()
     } catch (error) {
       toast.error(editingPrompt ? 'Failed to update prompt' : 'Failed to create prompt')
       console.error(error)
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -125,13 +168,12 @@ export default function PromptManagement() {
     }
   }
 
-  const handleDelete = async (promptId) => {
-    if (!window.confirm('Are you sure you want to delete this prompt?')) return
-
+  const handleDeleteConfirm = async (promptId) => {
     try {
       await deletePrompt(promptId)
       setPrompts(prev => prev.filter(p => p.id !== promptId))
       toast.success('Prompt deleted successfully')
+      setDeleteConfirmId(null)
       loadData()
     } catch (error) {
       toast.error('Failed to delete prompt')
@@ -149,6 +191,7 @@ export default function PromptManagement() {
       is_active: prompt.is_active,
     })
     setEditingPrompt(prompt)
+    setErrors({})
     setShowNewPromptForm(true)
   }
 
@@ -161,7 +204,58 @@ export default function PromptManagement() {
   if (loading) {
     return (
       <AdminLayout>
-        <div style={{ padding: 'var(--space-6)' }}>Loading prompts...</div>
+        <div className="prompt-management">
+          {/* Header Skeleton */}
+          <div className="prompt-management__header">
+            <div className="prompt-management__title-section">
+              <Skeleton width="40%" height={40} style={{ marginBottom: 'var(--space-2)' }} />
+              <Skeleton width="60%" height={16} />
+            </div>
+            <Skeleton width={140} height={40} />
+          </div>
+
+          {/* Stats Skeleton */}
+          <div className="prompt-management__stats">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="stat-card">
+                <Skeleton width="70%" height={14} style={{ marginBottom: 'var(--space-2)' }} />
+                <Skeleton width="40%" height={32} />
+              </div>
+            ))}
+          </div>
+
+          {/* Filters Skeleton */}
+          <div className="prompt-management__filters">
+            <div className="filter-group">
+              <Skeleton width="60px" height={14} style={{ marginBottom: 'var(--space-2)' }} />
+              <Skeleton width="100%" height={40} />
+            </div>
+            <div className="filter-group">
+              <Skeleton width="60px" height={14} style={{ marginBottom: 'var(--space-2)' }} />
+              <Skeleton width="100%" height={40} />
+            </div>
+          </div>
+
+          {/* Table Skeleton */}
+          <div className="prompts-table-wrapper">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} style={{ 
+                padding: 'var(--space-4)', 
+                borderBottom: '1px solid var(--color-border)',
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr 1fr 0.5fr 0.5fr 0.5fr',
+                gap: 'var(--space-3)'
+              }}>
+                <Skeleton width="80%" height={18} />
+                <Skeleton width="70%" height={18} />
+                <Skeleton width="90%" height={18} />
+                <Skeleton width="60%" height={18} />
+                <Skeleton width="40%" height={18} />
+                <Skeleton width="50%" height={18} />
+              </div>
+            ))}
+          </div>
+        </div>
       </AdminLayout>
     )
   }
@@ -190,6 +284,7 @@ export default function PromptManagement() {
                 description: '',
                 is_active: true,
               })
+              setErrors({})
               setShowNewPromptForm(true)
             }}
           >
@@ -321,7 +416,7 @@ export default function PromptManagement() {
                           variant="ghost"
                           size="sm"
                           icon={<Trash2 />}
-                          onClick={() => handleDelete(prompt.id)}
+                          onClick={() => setDeleteConfirmId(prompt.id)}
                           title="Delete prompt"
                         />
                       </div>
@@ -333,114 +428,171 @@ export default function PromptManagement() {
           </table>
         </motion.div>
 
-        {/* New/Edit Prompt Modal */}
-        <Modal
-          isOpen={showNewPromptForm}
-          onClose={() => {
-            setShowNewPromptForm(false)
-            setEditingPrompt(null)
-          }}
-          size="lg"
-        >
-          <ModalHeader
-            title={editingPrompt ? 'Edit Prompt' : 'Create New Prompt'}
-            onClose={() => {
-              setShowNewPromptForm(false)
-              setEditingPrompt(null)
-            }}
-          />
-          <ModalBody>
-            <form onSubmit={handleCreateOrUpdate} className="prompt-form">
-              <div className="form-group">
-                <label>Prompt Title *</label>
-                <Input
-                  placeholder="e.g., Tech Engineering Master Prompt"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                />
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Category</label>
-                  <Select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  >
-                    {CATEGORIES.map(cat => (
-                      <option key={cat} value={cat}>
-                        {cat.replace('_', ' ').toUpperCase()}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-
-                <div className="form-group">
-                  <label>Target Position</label>
-                  <Input
-                    placeholder="e.g., Software Engineer, DevOps Engineer"
-                    value={formData.target_position}
-                    onChange={(e) => setFormData({ ...formData, target_position: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>Description</label>
-                <Input
-                  placeholder="Brief description of this prompt"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Prompt Text *</label>
-                <textarea
-                  placeholder="Enter the system prompt instructions..."
-                  value={formData.prompt_text}
-                  onChange={(e) => setFormData({ ...formData, prompt_text: e.target.value })}
-                  style={{
-                    width: '100%',
-                    minHeight: '200px',
-                    padding: 'var(--space-3)',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: 'var(--radius-md)',
-                    fontFamily: 'monospace',
-                    fontSize: 'var(--text-sm)',
-                  }}
-                />
-              </div>
-
-              <div className="form-group">
-                <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={formData.is_active}
-                    onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                    style={{ cursor: 'pointer' }}
-                  />
-                  <span>Active</span>
-                </label>
-              </div>
-
-              <div className="form-actions">
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setShowNewPromptForm(false)
-                    setEditingPrompt(null)
-                  }}
+        {/* Create/Edit Prompt Form - Inline in Card */}
+        {showNewPromptForm && (
+          <motion.div
+            className="prompt-form-container"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+          >
+            <Card className="prompt-form-card">
+              <div className="prompt-form-header">
+                <h2>{editingPrompt ? 'Edit Prompt' : 'Create New Prompt'}</h2>
+                <button 
+                  className="prompt-form-close"
+                  onClick={resetForm}
+                  title="Close form"
                 >
-                  Cancel
-                </Button>
-                <Button variant="primary" type="submit">
-                  {editingPrompt ? 'Update Prompt' : 'Create Prompt'}
-                </Button>
+                  <X size={20} />
+                </button>
               </div>
-            </form>
-          </ModalBody>
-        </Modal>
+              <Card.Body>
+                <form onSubmit={handleCreateOrUpdate} className="prompt-form">
+                  <div className="form-group">
+                    <label>Prompt Title *</label>
+                    <Input
+                      placeholder="e.g., Tech Engineering Master Prompt"
+                      value={formData.title}
+                      onChange={(e) => handleFieldChange('title', e.target.value)}
+                      error={errors.title}
+                    />
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Category</label>
+                      <Select
+                        value={formData.category}
+                        onChange={(e) => handleFieldChange('category', e.target.value)}
+                      >
+                        {CATEGORIES.map(cat => (
+                          <option key={cat} value={cat}>
+                            {cat.replace('_', ' ').toUpperCase()}
+                          </option>
+                        ))}
+                      </Select>
+                      {errors.category && (
+                        <div className="form-error">{errors.category}</div>
+                      )}
+                    </div>
+
+                    <div className="form-group">
+                      <label>Target Position</label>
+                      <Input
+                        placeholder="e.g., Software Engineer, DevOps Engineer"
+                        value={formData.target_position}
+                        onChange={(e) => handleFieldChange('target_position', e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Description</label>
+                    <Input
+                      placeholder="Brief description of this prompt"
+                      value={formData.description}
+                      onChange={(e) => handleFieldChange('description', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Prompt Text *</label>
+                    <textarea
+                      placeholder="Enter the system prompt instructions..."
+                      value={formData.prompt_text}
+                      onChange={(e) => handleFieldChange('prompt_text', e.target.value)}
+                      className={errors.prompt_text ? 'textarea-error' : ''}
+                      style={{
+                        width: '100%',
+                        minHeight: '200px',
+                        padding: 'var(--space-3)',
+                        border: errors.prompt_text ? '2px solid #EF4444' : '1px solid var(--color-border)',
+                        borderRadius: 'var(--radius-md)',
+                        fontFamily: 'monospace',
+                        fontSize: 'var(--text-sm)',
+                        fontColor: 'var(--color-text-primary)',
+                      }}
+                    />
+                    {errors.prompt_text && (
+                      <div className="form-error">{errors.prompt_text}</div>
+                    )}
+                  </div>
+
+                  <div className="form-group">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={formData.is_active}
+                        onChange={(e) => handleFieldChange('is_active', e.target.checked)}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span>Active</span>
+                    </label>
+                  </div>
+
+                  <div className="form-actions">
+                    <Button
+                      variant="ghost"
+                      onClick={resetForm}
+                      disabled={submitting}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      variant="primary" 
+                      type="submit"
+                      disabled={submitting}
+                    >
+                      {submitting ? 'Saving...' : (editingPrompt ? 'Update Prompt' : 'Create Prompt')}
+                    </Button>
+                  </div>
+                </form>
+              </Card.Body>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {deleteConfirmId && (
+          <Modal
+            isOpen={!!deleteConfirmId}
+            onClose={() => setDeleteConfirmId(null)}
+            size="sm"
+          >
+            <ModalHeader
+              title="Delete Prompt"
+              onClose={() => setDeleteConfirmId(null)}
+            />
+            <ModalBody>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-3)' }}>
+                <AlertCircle size={24} style={{ color: '#EF4444', flexShrink: 0, marginTop: '2px' }} />
+                <div>
+                  <p style={{ marginBottom: 'var(--space-2)' }}>
+                    Are you sure you want to delete this prompt?
+                  </p>
+                  <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
+                    This action cannot be undone.
+                  </p>
+                </div>
+              </div>
+            </ModalBody>
+            <ModalFooter>
+              <Button
+                variant="ghost"
+                onClick={() => setDeleteConfirmId(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                onClick={() => handleDeleteConfirm(deleteConfirmId)}
+              >
+                Delete Prompt
+              </Button>
+            </ModalFooter>
+          </Modal>
+        )}
       </div>
     </AdminLayout>
   )
