@@ -1,59 +1,63 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import {
-  CheckSquare,
-  Clock,
-  Eye,
-  AlertCircle,
-  Play,
-  CheckCircle2,
-  User,
-  Calendar,
+  Plus,
+  Search,
   Filter,
-  RefreshCw,
-  ListChecks,
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  Trash2,
+  Edit2,
+  GripVertical,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { format, formatDistanceToNow, isAfter, isBefore, addDays } from 'date-fns'
 import AdminLayout from '../components/layout/AdminLayout'
-import { default as Avatar } from '../components/shared/Avatar'
+import Card from '../components/shared/Card'
 import Button from '../components/shared/Button'
-import Skeleton from '../components/shared/Skeleton'
-import { useAuth } from '../contexts/AuthContext'
+import Badge from '../components/shared/Badge'
+import { Input, Select } from '../components/shared/Input'
 import { useToast } from '../contexts/ToastContext'
-import { tasksService } from '../services/mockData'
+import { getTasks, getTaskMetrics, createTask, updateTaskStatus, updateTask, deleteTask } from '../services/tasksService'
 import './TaskManagement.css'
 
-const COLUMNS = [
-  { id: 'pending', title: 'To Do', icon: <AlertCircle />, color: 'pending' },
-  { id: 'in_progress', title: 'In Progress', icon: <Play />, color: 'progress' },
-  { id: 'review', title: 'Review', icon: <Eye />, color: 'review' },
-  { id: 'completed', title: 'Done', icon: <CheckCircle2 />, color: 'done' },
-]
-
-const FILTER_OPTIONS = [
-  { value: 'all', label: 'All Tasks' },
-  { value: 'my_tasks', label: 'My Tasks' },
-  { value: 'high_priority', label: 'High Priority' },
-  { value: 'overdue', label: 'Overdue' },
+const STATUS_OPTIONS = ['todo', 'in_progress', 'review', 'done']
+const PRIORITY_OPTIONS = [
+  { value: 'low', label: 'Low', color: '#6B7280' },
+  { value: 'normal', label: 'Normal', color: '#3B82F6' },
+  { value: 'high', label: 'High', color: '#F59E0B' },
+  { value: 'urgent', label: 'Urgent', color: '#EF4444' },
 ]
 
 export default function TaskManagement() {
-  const { user } = useAuth()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [tasks, setTasks] = useState([])
-  const [filter, setFilter] = useState('all')
+  const [metrics, setMetrics] = useState(null)
+  const [draggedTask, setDraggedTask] = useState(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedPriority, setSelectedPriority] = useState('all')
+  const [showNewTaskForm, setShowNewTaskForm] = useState(false)
+  const [newTaskData, setNewTaskData] = useState({
+    title: '',
+    description: '',
+    priority: 'normal',
+    status: 'todo',
+    due_date: '',
+  })
 
   useEffect(() => {
-    loadTasks()
+    loadData()
   }, [])
 
-  const loadTasks = async () => {
+  const loadData = async () => {
     setLoading(true)
     try {
-      const tasksData = await tasksService.getAll()
+      const [tasksData, metricsData] = await Promise.all([
+        getTasks(),
+        getTaskMetrics(),
+      ])
       setTasks(tasksData)
+      setMetrics(metricsData)
     } catch (error) {
       toast.error('Failed to load tasks')
       console.error(error)
@@ -62,45 +66,108 @@ export default function TaskManagement() {
     }
   }
 
-  const getFilteredTasks = () => {
-    let filtered = [...tasks]
+  const handleDragStart = (e, task) => {
+    setDraggedTask(task)
+    e.dataTransfer.effectAllowed = 'move'
+  }
 
-    switch (filter) {
-      case 'my_tasks':
-        filtered = filtered.filter(t => t.assignedTo?.id === user?.id)
-        break
-      case 'high_priority':
-        filtered = filtered.filter(t => t.priority === 'high')
-        break
-      case 'overdue':
-        filtered = filtered.filter(t => isAfter(new Date(), t.dueDate))
-        break
+  const handleDragOver = (e) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }
+
+  const handleDrop = async (e, newStatus) => {
+    e.preventDefault()
+    if (!draggedTask) return
+
+    try {
+      await updateTaskStatus(draggedTask.id, newStatus)
+      setTasks(prev =>
+        prev.map(t => (t.id === draggedTask.id ? { ...t, status: newStatus } : t))
+      )
+      toast.success(`Task moved to ${newStatus}`)
+    } catch (error) {
+      toast.error('Failed to update task status')
+      console.error(error)
+    } finally {
+      setDraggedTask(null)
+    }
+  }
+
+  const handleCreateTask = async (e) => {
+    e.preventDefault()
+    if (!newTaskData.title.trim()) {
+      toast.error('Please enter a task title')
+      return
+    }
+
+    try {
+      const createdTask = await createTask(newTaskData)
+      setTasks(prev => [...prev, createdTask])
+      setNewTaskData({
+        title: '',
+        description: '',
+        priority: 'normal',
+        status: 'todo',
+        due_date: '',
+      })
+      setShowNewTaskForm(false)
+      toast.success('Task created successfully')
+    } catch (error) {
+      toast.error('Failed to create task')
+      console.error(error)
+    }
+  }
+
+  const handleDeleteTask = async (taskId) => {
+    if (!window.confirm('Are you sure you want to delete this task?')) return
+
+    try {
+      await deleteTask(taskId)
+      setTasks(prev => prev.filter(t => t.id !== taskId))
+      toast.success('Task deleted successfully')
+    } catch (error) {
+      toast.error('Failed to delete task')
+      console.error(error)
+    }
+  }
+
+  const getFilteredTasks = (status) => {
+    return tasks.filter(task => {
+      const matchesStatus = task.status === status
+      const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesPriority = selectedPriority === 'all' || task.priority === selectedPriority
+      return matchesStatus && matchesSearch && matchesPriority
+    })
+  }
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'todo':
+        return '#3B82F6'
+      case 'in_progress':
+        return '#F59E0B'
+      case 'review':
+        return '#8B5CF6'
+      case 'done':
+        return '#10B981'
       default:
-        break
+        return '#6B7280'
     }
-
-    return filtered
   }
 
-  const getTasksByStatus = (status) => {
-    const filtered = getFilteredTasks()
-    return filtered.filter(task => task.status === status)
+  const getPriorityColor = (priority) => {
+    const option = PRIORITY_OPTIONS.find(p => p.value === priority)
+    return option?.color || '#6B7280'
   }
 
-  const getTaskDueStatus = (dueDate) => {
-    const now = new Date()
-    if (isAfter(now, dueDate)) {
-      return 'overdue'
-    }
-    if (isBefore(dueDate, addDays(now, 2))) {
-      return 'soon'
-    }
-    return 'normal'
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div style={{ padding: 'var(--space-6)' }}>Loading tasks...</div>
+      </AdminLayout>
+    )
   }
-
-  const filteredTasks = getFilteredTasks()
-  const myTasks = tasks.filter(t => t.assignedTo?.id === user?.id)
-  const overdueTasks = tasks.filter(t => isAfter(new Date(), t.dueDate))
 
   return (
     <AdminLayout>
@@ -108,158 +175,254 @@ export default function TaskManagement() {
         {/* Header */}
         <div className="task-management__header">
           <div className="task-management__title-section">
-            <h1 className="task-management__title">Task Management</h1>
+            <h1 className="task-management__title">Task Board</h1>
             <p className="task-management__subtitle">
-              Organize and track your work across submissions
+              Manage and track CV fulfillment tasks
             </p>
           </div>
-          <div className="task-management__actions">
-            <Button variant="ghost" icon={<RefreshCw />} onClick={loadTasks}>
-              Refresh
-            </Button>
-            <Button variant="primary" icon={<CheckSquare />}>
-              New Task
-            </Button>
-          </div>
+          <Button
+            variant="primary"
+            icon={<Plus />}
+            onClick={() => setShowNewTaskForm(true)}
+          >
+            New Task
+          </Button>
         </div>
 
-        {/* Stats */}
-        <div className="task-stats">
-          <div className="task-stat task-stat--total">
-            <div className="task-stat__icon">
-              <ListChecks size={20} />
+        {/* Metrics */}
+        {metrics && (
+          <div className="task-management__metrics">
+            <div className="metric-card">
+              <div className="metric-card__label">Total Tasks</div>
+              <div className="metric-card__value">{metrics.total_tasks}</div>
             </div>
-            <div className="task-stat__info">
-              <div className="task-stat__value">{filteredTasks.length}</div>
-              <div className="task-stat__label">Total Tasks</div>
+            <div className="metric-card">
+              <div className="metric-card__label">Overdue</div>
+              <div className="metric-card__value" style={{ color: '#EF4444' }}>
+                {metrics.overdue_tasks}
+              </div>
+            </div>
+            <div className="metric-card">
+              <div className="metric-card__label">To Do</div>
+              <div className="metric-card__value">{metrics.by_status.todo}</div>
+            </div>
+            <div className="metric-card">
+              <div className="metric-card__label">In Progress</div>
+              <div className="metric-card__value">{metrics.by_status.in_progress}</div>
+            </div>
+            <div className="metric-card">
+              <div className="metric-card__label">Review</div>
+              <div className="metric-card__value">{metrics.by_status.review}</div>
+            </div>
+            <div className="metric-card">
+              <div className="metric-card__label">Done</div>
+              <div className="metric-card__value">{metrics.by_status.done}</div>
             </div>
           </div>
-          <div className="task-stat task-stat--pending">
-            <div className="task-stat__icon">
-              <User size={20} />
-            </div>
-            <div className="task-stat__info">
-              <div className="task-stat__value">{myTasks.length}</div>
-              <div className="task-stat__label">My Tasks</div>
-            </div>
-          </div>
-          <div className="task-stat task-stat--overdue">
-            <div className="task-stat__icon">
-              <AlertCircle size={20} />
-            </div>
-            <div className="task-stat__info">
-              <div className="task-stat__value">{overdueTasks.length}</div>
-              <div className="task-stat__label">Overdue</div>
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* Filters */}
         <div className="task-management__filters">
-          {FILTER_OPTIONS.map((option) => (
-            <div
-              key={option.value}
-              className={`filter-pill ${filter === option.value ? 'filter-pill--active' : ''}`}
-              onClick={() => setFilter(option.value)}
+          <div className="filter-group">
+            <label className="filter-group__label">Search</label>
+            <Input
+              placeholder="Search tasks..."
+              icon={<Search />}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="filter-group">
+            <label className="filter-group__label">Priority</label>
+            <Select
+              value={selectedPriority}
+              onChange={(e) => setSelectedPriority(e.target.value)}
             >
-              {option.label}
-              <span className="filter-pill__count">
-                {option.value === 'all' && filteredTasks.length}
-                {option.value === 'my_tasks' && myTasks.length}
-                {option.value === 'high_priority' && tasks.filter(t => t.priority === 'high').length}
-                {option.value === 'overdue' && overdueTasks.length}
-              </span>
-            </div>
-          ))}
+              <option value="all">All Priorities</option>
+              {PRIORITY_OPTIONS.map(p => (
+                <option key={p.value} value={p.value}>{p.label}</option>
+              ))}
+            </Select>
+          </div>
         </div>
 
         {/* Kanban Board */}
-        {loading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--space-5)' }}>
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} variant="card" height={400} />
-            ))}
-          </div>
-        ) : (
-          <motion.div
-            className="task-board"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            {COLUMNS.map((column) => {
-              const columnTasks = getTasksByStatus(column.id)
-              
-              return (
-                <div key={column.id} className={`task-column task-column--${column.color}`}>
-                  <div className="task-column__header">
-                    <div className="task-column__title-wrapper">
-                      <span className="task-column__icon">{column.icon}</span>
-                      <span className="task-column__title">{column.title}</span>
-                    </div>
-                    <span className="task-column__count">{columnTasks.length}</span>
-                  </div>
-                  <div className="task-column__body">
-                    {columnTasks.length === 0 ? (
-                      <div className="task-column__empty">
-                        <CheckSquare className="task-column__empty-icon" />
-                        <div className="task-column__empty-text">No tasks in this column</div>
-                      </div>
-                    ) : (
-                      columnTasks.map((task, index) => {
-                        const dueStatus = getTaskDueStatus(task.dueDate)
-                        
-                        return (
-                          <motion.div
-                            key={task.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                          >
-                            <Link
-                              to={`/admin/submissions/${task.submissionId}`}
-                              className="task-card"
-                            >
-                              <div className="task-card__header">
-                                <div className="task-card__submission">{task.submissionId}</div>
-                                <div className={`task-card__priority task-card__priority--${task.priority}`}>
-                                  {task.priority}
-                                </div>
-                              </div>
-                              
-                              <div className="task-card__title">{task.title}</div>
-                              
-                              <div className="task-card__description">
-                                {task.description}
-                              </div>
-
-                              <div className="task-card__client">
-                                <User className="task-card__client-icon" />
-                                {task.clientName}
-                              </div>
-                              
-                              <div className="task-card__footer">
-                                <div className="task-card__assignee">
-                                  <Avatar
-                                    fallback={task.assignedTo.name}
-                                    size="xs"
-                                  />
-                                  <span>{task.assignedTo.name.split(' ')[0]}</span>
-                                </div>
-                                <div className={`task-card__due task-card__due--${dueStatus}`}>
-                                  <Clock size={12} />
-                                  {format(task.dueDate, 'MMM d')}
-                                </div>
-                              </div>
-                            </Link>
-                          </motion.div>
-                        )
-                      })
-                    )}
-                  </div>
+        <div className="kanban-board">
+          {STATUS_OPTIONS.map(status => {
+            const statusTasks = getFilteredTasks(status)
+            const statusLabel = status.replace('_', ' ').toUpperCase()
+            
+            return (
+              <div key={status} className="kanban-column">
+                <div className="kanban-column__header">
+                  <h3 className="kanban-column__title">
+                    {statusLabel}
+                    <span className="kanban-column__count">{statusTasks.length}</span>
+                  </h3>
                 </div>
-              )
-            })}
-          </motion.div>
+
+                <div
+                  className="kanban-column__content"
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, status)}
+                >
+                  {statusTasks.length === 0 ? (
+                    <div className="kanban-column__empty">
+                      No tasks
+                    </div>
+                  ) : (
+                    statusTasks.map(task => (
+                      <motion.div
+                        key={task.id}
+                        className="kanban-card"
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, task)}
+                        whileHover={{ y: -2 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <div className="kanban-card__header">
+                          <div className="kanban-card__title">{task.title}</div>
+                          <button
+                            className="kanban-card__delete"
+                            onClick={() => handleDeleteTask(task.id)}
+                            title="Delete task"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+
+                        {task.description && (
+                          <div className="kanban-card__description">
+                            {task.description}
+                          </div>
+                        )}
+
+                        <div className="kanban-card__footer">
+                          <Badge
+                            size="sm"
+                            style={{
+                              background: getPriorityColor(task.priority),
+                              color: 'white',
+                            }}
+                          >
+                            {task.priority}
+                          </Badge>
+                          {task.submission?.reference_id && (
+                            <Badge
+                              size="sm"
+                              variant="ghost"
+                              style={{ fontSize: '10px' }}
+                            >
+                              {task.submission.reference_id}
+                            </Badge>
+                          )}
+                        </div>
+
+                        {task.is_overdue && (
+                          <div className="kanban-card__overdue">
+                            <AlertCircle size={12} />
+                            Overdue
+                          </div>
+                        )}
+
+                        {task.due_date && (
+                          <div className="kanban-card__due-date">
+                            <Clock size={12} />
+                            {new Date(task.due_date).toLocaleDateString()}
+                          </div>
+                        )}
+
+                        {task.assigned_to && (
+                          <div className="kanban-card__assignee">
+                            Assigned to: {task.assigned_to.first_name}
+                          </div>
+                        )}
+                      </motion.div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* New Task Form Modal */}
+        {showNewTaskForm && (
+          <div className="modal-overlay" onClick={() => setShowNewTaskForm(false)}>
+            <Card className="new-task-modal">
+              <Card.Header title="Create New Task" />
+              <Card.Body>
+                <form onSubmit={handleCreateTask} className="new-task-form">
+                  <div className="form-group">
+                    <label>Task Title *</label>
+                    <Input
+                      placeholder="Enter task title..."
+                      value={newTaskData.title}
+                      onChange={(e) => setNewTaskData({ ...newTaskData, title: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Description</label>
+                    <textarea
+                      placeholder="Enter task description..."
+                      value={newTaskData.description}
+                      onChange={(e) => setNewTaskData({ ...newTaskData, description: e.target.value })}
+                      style={{
+                        width: '100%',
+                        minHeight: '80px',
+                        padding: 'var(--space-2)',
+                        border: '1px solid var(--color-border)',
+                        borderRadius: 'var(--radius-md)',
+                        fontFamily: 'inherit',
+                      }}
+                    />
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Priority</label>
+                      <Select
+                        value={newTaskData.priority}
+                        onChange={(e) => setNewTaskData({ ...newTaskData, priority: e.target.value })}
+                      >
+                        {PRIORITY_OPTIONS.map(p => (
+                          <option key={p.value} value={p.value}>{p.label}</option>
+                        ))}
+                      </Select>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Due Date</label>
+                      <input
+                        type="datetime-local"
+                        value={newTaskData.due_date}
+                        onChange={(e) => setNewTaskData({ ...newTaskData, due_date: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: 'var(--space-2)',
+                          border: '1px solid var(--color-border)',
+                          borderRadius: 'var(--radius-md)',
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-actions">
+                    <Button
+                      variant="ghost"
+                      onClick={() => setShowNewTaskForm(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button variant="primary" type="submit">
+                      Create Task
+                    </Button>
+                  </div>
+                </form>
+              </Card.Body>
+            </Card>
+          </div>
         )}
       </div>
     </AdminLayout>
