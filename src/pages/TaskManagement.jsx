@@ -162,10 +162,11 @@ export default function TaskManagement() {
     return option?.color || '#6B7280'
   }
 
+  // Return with AdminLayout but show only task-specific skeleton
   if (loading) {
     return (
       <AdminLayout>
-        <div className="task-management">
+        <div className="task-management" style={{ paddingTop: 0 }}>
           {/* Header Skeleton */}
           <div className="task-management__header">
             <div className="task-management__title-section">
