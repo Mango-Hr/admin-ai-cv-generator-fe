@@ -420,23 +420,54 @@ export default function SubmissionDetail() {
             )}
 
             {/* Files */}
-            {submission.existing_cv_url && (
+            {(submission.existing_cv_url || documents.length > 0) && (
               <Card>
-                <Card.Header title="Attached Files" icon={<FileText />} />
+                <Card.Header title="Documents" icon={<FileText />} />
                 <Card.Body>
                   <div className="files-list">
-                    <div className="file-item">
-                      <div className="file-item__icon">
-                        <FileText size={20} />
+                    {/* Original CV Upload */}
+                    {submission.existing_cv_url && (
+                      <div className="file-item">
+                        <div className="file-item__icon">
+                          <FileText size={20} />
+                        </div>
+                        <div className="file-item__info">
+                          <div className="file-item__name">Original CV</div>
+                          <div className="file-item__meta">Uploaded {formatDistanceToNow(parseISO(submission.created_at), { addSuffix: true })}</div>
+                        </div>
+                        <a href={submission.existing_cv_url} target="_blank" rel="noopener noreferrer">
+                          <Button variant="ghost" size="sm" icon={<Download />} title="Download" />
+                        </a>
                       </div>
-                      <div className="file-item__info">
-                        <div className="file-item__name">existing-cv.pdf</div>
-                        <div className="file-item__meta">Uploaded {formatDistanceToNow(parseISO(submission.created_at), { addSuffix: true })}</div>
+                    )}
+
+                    {/* Generated Documents */}
+                    {documents.map((doc) => (
+                      <div key={doc.id} className="file-item">
+                        <div className="file-item__icon">
+                          <FileText size={20} />
+                        </div>
+                        <div className="file-item__info">
+                          <div className="file-item__name">{doc.file_name}</div>
+                          <div className="file-item__meta">
+                            {doc.file_type.toUpperCase()} • v{doc.version} • {formatDistanceToNow(parseISO(doc.created_at), { addSuffix: true })}
+                          </div>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          icon={<Download />}
+                          onClick={() => downloadDocument(id, doc.id, doc.file_name)}
+                          title="Download"
+                        />
                       </div>
-                      <a href={submission.existing_cv_url} target="_blank" rel="noopener noreferrer">
-                        <Button variant="ghost" size="sm" icon={<Download />} />
-                      </a>
-                    </div>
+                    ))}
+
+                    {documents.length === 0 && !submission.existing_cv_url && (
+                      <div style={{ textAlign: 'center', padding: 'var(--space-4)', color: 'var(--color-text-tertiary)' }}>
+                        No documents available. Generate AI CV first.
+                      </div>
+                    )}
                   </div>
                 </Card.Body>
               </Card>
