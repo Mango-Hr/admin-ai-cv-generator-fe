@@ -21,6 +21,7 @@ import { useAuth } from '../../../contexts/AuthContext'
 import { useToast } from '../../../contexts/ToastContext'
 import { getAdminProfile } from '../../../services/authService'
 import { getNewSubmissionsCount } from '../../../services/submissionsService'
+import { getTaskMetrics } from '../../../services/tasksService'
 import logoImg from '../../../assets/textbg.png'
 import './AdminLayout.css'
 
@@ -30,7 +31,7 @@ const NAV_ITEMS = [
     items: [
       { path: '/admin', icon: <LayoutDashboard />, label: 'Dashboard', roles: ['super_admin', 'sub_admin'] },
       { path: '/admin/submissions', icon: <FileStack />, label: 'Submissions', badge: null, roles: ['super_admin', 'sub_admin'] },
-      { path: '/admin/tasks', icon: <CheckSquare />, label: 'My Tasks', badge: 5, roles: ['super_admin', 'sub_admin'] },
+      { path: '/admin/tasks', icon: <CheckSquare />, label: 'My Tasks', badge: null, roles: ['super_admin', 'sub_admin'] },
     ],
   },
   {
@@ -53,6 +54,7 @@ export default function AdminLayout({ children }) {
   const [profile, setProfile] = useState(null)
   const [profileLoading, setProfileLoading] = useState(true)
   const [submissionCount, setSubmissionCount] = useState(0)
+  const [taskCount, setTaskCount] = useState(0)
   
   // Fetch user profile for avatar
   useEffect(() => {
@@ -81,6 +83,22 @@ export default function AdminLayout({ children }) {
 
     if (user) {
       fetchSubmissionCount()
+    }
+  }, [user])
+
+  // Fetch task count from API
+  useEffect(() => {
+    const fetchTaskCount = async () => {
+      try {
+        const metrics = await getTaskMetrics()
+        setTaskCount(metrics.total_tasks)
+      } catch (error) {
+        console.error('Failed to fetch task metrics:', error)
+      }
+    }
+
+    if (user) {
+      fetchTaskCount()
     }
   }, [user])
   
@@ -172,9 +190,9 @@ export default function AdminLayout({ children }) {
                   >
                     <span className="admin-layout__nav-icon">{item.icon}</span>
                     <span className="admin-layout__nav-text">{item.label}</span>
-                    {item.badge && (
+                    {item.label === 'My Tasks' && taskCount > 0 && (
                       <Badge size="sm" variant="new" className="admin-layout__nav-badge">
-                        {item.badge}
+                        {taskCount}
                       </Badge>
                     )}
                     {item.label === 'Submissions' && submissionCount > 0 && (
