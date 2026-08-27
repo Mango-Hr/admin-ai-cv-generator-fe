@@ -249,17 +249,32 @@
   }
 }
 
-/* Form Container */
-.prompt-form-container {
-  margin-top: var(--space-6);
-  margin-bottom: var(--space-6);
+/* Modal Overlay */
+.prompt-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-4);
 }
 
-.prompt-form-card {
+.prompt-modal-content {
   background: var(--color-bg);
-  border: 2px solid var(--color-primary);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-xl);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .prompt-form-header {
@@ -269,6 +284,7 @@
   padding: var(--space-4);
   border-bottom: 1px solid var(--color-border);
   gap: var(--space-3);
+  flex-shrink: 0;
 }
 
 .prompt-form-header h2 {
@@ -289,11 +305,43 @@
   justify-content: center;
   border-radius: var(--radius-md);
   transition: all var(--transition-fast);
+  flex-shrink: 0;
 }
 
 .prompt-form-close:hover {
   background: var(--color-bg-secondary);
   color: var(--color-text-primary);
+}
+
+.prompt-modal-body {
+  padding: var(--space-4);
+  overflow-y: auto;
+  flex: 1;
+}
+
+@media (max-width: 640px) {
+  .prompt-modal-overlay {
+    padding: var(--space-2);
+    align-items: flex-end;
+  }
+
+  .prompt-modal-content {
+    max-width: 100%;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    max-height: 85vh;
+  }
+
+  .prompt-form-header {
+    padding: var(--space-3);
+  }
+
+  .prompt-form-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .prompt-modal-body {
+    padding: var(--space-3);
+  }
 }
 
 /* Form */
@@ -354,23 +402,6 @@
 }
 
 @media (max-width: 640px) {
-  .prompt-form-container {
-    margin-top: var(--space-4);
-    margin-bottom: var(--space-4);
-  }
-
-  .prompt-form-header {
-    padding: var(--space-2);
-  }
-
-  .prompt-form-header h2 {
-    font-size: 1.1rem;
-  }
-
-  .prompt-form-close {
-    padding: var(--space-1);
-  }
-
   .form-actions {
     flex-direction: column-reverse;
     gap: var(--space-2);

@@ -428,15 +428,16 @@ export default function PromptManagement() {
           </table>
         </motion.div>
 
-        {/* Create/Edit Prompt Form - Inline in Card */}
+        {/* Create/Edit Prompt Form Modal */}
         {showNewPromptForm && (
-          <motion.div
-            className="prompt-form-container"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-          >
-            <Card className="prompt-form-card">
+          <div className="prompt-modal-overlay" onClick={resetForm}>
+            <motion.div
+              className="prompt-modal-content"
+              onClick={(e) => e.stopPropagation()}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+            >
               <div className="prompt-form-header">
                 <h2>{editingPrompt ? 'Edit Prompt' : 'Create New Prompt'}</h2>
                 <button 
@@ -447,7 +448,7 @@ export default function PromptManagement() {
                   <X size={20} />
                 </button>
               </div>
-              <Card.Body>
+              <div className="prompt-modal-body">
                 <form onSubmit={handleCreateOrUpdate} className="prompt-form">
                   <div className="form-group">
                     <label>Prompt Title *</label>
@@ -511,7 +512,8 @@ export default function PromptManagement() {
                         borderRadius: 'var(--radius-md)',
                         fontFamily: 'monospace',
                         fontSize: 'var(--text-sm)',
-                        fontColor: 'var(--color-text-primary)',
+                        color: 'var(--color-text-primary)',
+                        backgroundColor: 'var(--color-bg)',
                       }}
                     />
                     {errors.prompt_text && (
@@ -548,9 +550,9 @@ export default function PromptManagement() {
                     </Button>
                   </div>
                 </form>
-              </Card.Body>
-            </Card>
-          </motion.div>
+              </div>
+            </motion.div>
+          </div>
         )}
 
         {/* Delete Confirmation Modal */}
