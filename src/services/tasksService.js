@@ -4,17 +4,38 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://ai-cv-generat
 
 /**
  * Get Kanban task metrics summary
+ * Fetches metrics from the main tasks endpoint
  * @returns {Promise<{total_tasks, overdue_tasks, by_status, by_priority}>}
  */
 export const getTaskMetrics = async () => {
   try {
     const token = localStorage.getItem('admin_token')
-    const response = await axios.get(`${API_BASE_URL}/api/v1/admin/tasks/metrics`, {
+    const response = await axios.get(`${API_BASE_URL}/api/v1/admin/tasks`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     })
-    return response.data.data
+    
+    // Calculate metrics from tasks response
+    const tasks = response.data.data || []
+    const metrics = {
+      total_tasks: tasks.length,
+      overdue_tasks: tasks.filter(t => t.is_overdue).length,
+      by_status: {
+        todo: tasks.filter(t => t.status === 'todo').length,
+        in_progress: tasks.filter(t => t.status === 'in_progress').length,
+        review: tasks.filter(t => t.status === 'review').length,
+        done: tasks.filter(t => t.status === 'done').length,
+      },
+      by_priority: {
+        low: tasks.filter(t => t.priority === 'low').length,
+        normal: tasks.filter(t => t.priority === 'normal').length,
+        high: tasks.filter(t => t.priority === 'high').length,
+        urgent: tasks.filter(t => t.priority === 'urgent').length,
+      },
+    }
+    
+    return metrics
   } catch (error) {
     console.error('[TasksService] Failed to fetch task metrics:', error)
     throw error
