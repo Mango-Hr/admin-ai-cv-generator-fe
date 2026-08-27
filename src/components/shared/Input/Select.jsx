@@ -59,12 +59,13 @@ const Select = forwardRef(({
         }
         {...props}
       >
-        {placeholder && (
+        {placeholder && !props.children && (
           <option value="" disabled>
             {placeholder}
           </option>
         )}
         
+        {/* Support both options prop and children */}
         {options.map((option) => {
           // Support both string[] and {label, value}[]
           const optionValue = typeof option === 'string' ? option : option.value
@@ -76,6 +77,9 @@ const Select = forwardRef(({
             </option>
           )
         })}
+        
+        {/* Support passing options as children for backward compatibility */}
+        {props.children}
       </select>
 
       {hasError && (
