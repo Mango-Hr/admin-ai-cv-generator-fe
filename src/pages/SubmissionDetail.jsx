@@ -16,6 +16,8 @@ import {
   Trash2,
   AlertCircle,
   Calendar,
+  Zap,
+  Loader,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { format, formatDistanceToNow, parseISO } from 'date-fns'
@@ -31,6 +33,7 @@ import { useToast } from '../contexts/ToastContext'
 import { useAuth } from '../contexts/AuthContext'
 import { fetchSubmissionById, updateSubmissionStatus, assignSubmission, unassignSubmission, deleteSubmission } from '../services/submissionsService'
 import { fetchStaffList } from '../services/staffService'
+import { triggerAIGeneration, getGenerationHistory, renderDocuments, getSubmissionDocuments, downloadDocument, formatTokenInfo, formatCost } from '../services/aiService'
 import './SubmissionDetail.css'
 
 const STATUS_OPTIONS = [
@@ -56,6 +59,12 @@ export default function SubmissionDetail() {
   const [assigningStaffId, setAssigningStaffId] = useState(null)
   const [glowingStatus, setGlowingStatus] = useState(null)
   const [showAllActivities, setShowAllActivities] = useState(false)
+  const [generationHistory, setGenerationHistory] = useState([])
+  const [documents, setDocuments] = useState([])
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [isRenderingDocs, setIsRenderingDocs] = useState(false)
+  const [aiModel, setAiModel] = useState('gpt-4o')
+  const [customInstructions, setCustomInstructions] = useState('')
 
   useEffect(() => {
     loadData()
@@ -64,9 +73,11 @@ export default function SubmissionDetail() {
   const loadData = async () => {
     setLoading(true)
     try {
-      const [submissionData, staffData] = await Promise.all([
+      const [submissionData, staffData, historyData, docsData] = await Promise.all([
         fetchSubmissionById(id),
         fetchStaffList(),
+        getGenerationHistory(id),
+        getSubmissionDocuments(id),
       ])
       
       if (!submissionData) {
@@ -79,6 +90,8 @@ export default function SubmissionDetail() {
       setStaff(staffData.staff || [])
       setSelectedStatus(submissionData.status)
       setSelectedStaff(submissionData.assigned_to?.id || '')
+      setGenerationHistory(historyData)
+      setDocuments(docsData)
     } catch (error) {
       toast.error('Failed to load submission details')
       console.error(error)
@@ -145,6 +158,39 @@ export default function SubmissionDetail() {
     } catch (error) {
       toast.error('Failed to update status')
       console.error(error)
+    }
+  }
+
+  const handleGenerateCV = async () => {
+    setIsGenerating(true)
+    try {
+      const generation = await triggerAIGeneration(id, {
+        provider: 'openai',
+        model: aiModel,
+        custom_instructions: customInstructions || null,
+      })
+      
+      setGenerationHistory(prev => [generation, ...prev])
+      toast.success('AI CV generated successfully')
+    } catch (error) {
+      toast.error('Failed to generate CV')
+      console.error(error)
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
+  const handleRenderDocuments = async (generationId) => {
+    setIsRenderingDocs(true)
+    try {
+      const rendered = await renderDocuments(id, generationId, ['pdf', 'docx'])
+      setDocuments(prev => [...prev, ...rendered])
+      toast.success('Documents rendered successfully')
+    } catch (error) {
+      toast.error('Failed to render documents')
+      console.error(error)
+    } finally {
+      setIsRenderingDocs(false)
     }
   }
 
@@ -463,7 +509,134 @@ export default function SubmissionDetail() {
               </Card>
             )}
 
-            {/* Status Update */}
+            {/* AI Generation */}
+            <Card>
+              <Card.Header title="AI Generation" icon={<Zap />} />
+              <Card.Body>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 'var(--text-sm)', fontWeight: 600, marginBottom: 'var(--space-2)' }}>
+                      AI Model
+                    </label>
+                    <Select
+                      value={aiModel}
+                      onChange={(e) => setAiModel(e.target.value)}
+                    >
+                      <option value="gpt-4o">GPT-4o</option>
+                      <option value="gpt-4o-mini">GPT-4o Mini</option>
+                      <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: 'var(--text-sm)', fontWeight: 600, marginBottom: 'var(--space-2)' }}>
+                      Custom Instructions
+                    </label>
+                    <textarea
+                      value={customInstructions}
+                      onChange={(e) => setCustomInstructions(e.target.value)}
+                      placeholder="Add custom instructions for the AI..."
+                      style={{
+                        width: '100%',
+                        minHeight: '80px',
+                        padding: 'var(--space-2)',
+                        border: '1px solid var(--color-border)',
+                        borderRadius: 'var(--radius-md)',
+                        fontFamily: 'inherit',
+                        fontSize: 'var(--text-sm)',
+                      }}
+                    />
+                  </div>
+
+                  <Button
+                    variant="primary"
+                    icon={isGenerating ? <Loader className="animate-spin" /> : <Zap />}
+                    onClick={handleGenerateCV}
+                    disabled={isGenerating}
+                    loading={isGenerating}
+                    style={{ width: '100%' }}
+                  >
+                    {isGenerating ? 'Generating...' : 'Generate CV'}
+                  </Button>
+                </div>
+
+                {/* Generation History */}
+                {generationHistory.length > 0 && (
+                  <div style={{ marginTop: 'var(--space-4)', paddingTop: 'var(--space-4)', borderTop: '1px solid var(--color-border)' }}>
+                    <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 600, marginBottom: 'var(--space-2)' }}>
+                      Generation History
+                    </h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                      {generationHistory.slice(0, 3).map((gen, idx) => (
+                        <div key={idx} style={{
+                          background: 'var(--color-bg-secondary)',
+                          padding: 'var(--space-2)',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: 'var(--text-xs)',
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontWeight: 600 }}>{gen.model}</span>
+                            <Badge variant={gen.status === 'success' ? 'completed' : 'new'}>
+                              {gen.status}
+                            </Badge>
+                          </div>
+                          <div style={{ color: 'var(--color-text-secondary)' }}>
+                            Tokens: {formatTokenInfo(gen.tokens)} • Cost: {formatCost(gen.cost)}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRenderDocuments(gen.id)}
+                            disabled={isRenderingDocs}
+                            loading={isRenderingDocs}
+                            style={{ marginTop: '8px', width: '100%' }}
+                          >
+                            {isRenderingDocs ? 'Rendering...' : 'Render Documents'}
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Generated Documents */}
+                {documents.length > 0 && (
+                  <div style={{ marginTop: 'var(--space-4)', paddingTop: 'var(--space-4)', borderTop: '1px solid var(--color-border)' }}>
+                    <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 600, marginBottom: 'var(--space-2)' }}>
+                      Generated Documents
+                    </h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                      {documents.map(doc => (
+                        <div key={doc.id} style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          background: 'var(--color-bg-secondary)',
+                          padding: 'var(--space-2)',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: 'var(--text-xs)',
+                        }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 600, marginBottom: '4px' }}>
+                              {doc.file_name}
+                            </div>
+                            <div style={{ color: 'var(--color-text-secondary)' }}>
+                              {doc.file_type.toUpperCase()} • v{doc.version}
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={<Download size={14} />}
+                            onClick={() => downloadDocument(id, doc.id, doc.file_name)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </Card.Body>
+            </Card>
             <Card>
               <Card.Header title="Status" icon={<CheckCircle2 />} />
               <Card.Body>
