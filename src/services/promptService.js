@@ -4,17 +4,26 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://ai-cv-generat
 
 /**
  * Get prompt management dashboard statistics
+ * Calculates stats from prompts list
  * @returns {Promise<Object>}
  */
 export const getPromptStats = async () => {
   try {
     const token = localStorage.getItem('admin_token')
-    const response = await axios.get(`${API_BASE_URL}/api/v1/admin/prompts/stats`, {
+    const response = await axios.get(`${API_BASE_URL}/api/v1/admin/prompts`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     })
-    return response.data.data
+    
+    const prompts = response.data.data || []
+    const stats = {
+      total_prompts: prompts.length,
+      active_prompts: prompts.filter(p => p.is_active).length,
+      total_usage: prompts.reduce((sum, p) => sum + (p.usage_count || 0), 0),
+    }
+    
+    return stats
   } catch (error) {
     console.error('[PromptService] Failed to fetch prompt stats:', error)
     throw error

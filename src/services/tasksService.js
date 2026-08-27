@@ -16,22 +16,33 @@ export const getTaskMetrics = async () => {
       },
     })
     
-    // Calculate metrics from tasks response
-    const tasks = response.data.data || []
+    // Handle different response structures
+    let tasks = response.data.data || []
+    
+    // If data is an object with a 'tasks' property, extract it
+    if (tasks && typeof tasks === 'object' && !Array.isArray(tasks)) {
+      tasks = tasks.tasks || tasks.data || []
+    }
+    
+    // Ensure tasks is an array
+    if (!Array.isArray(tasks)) {
+      tasks = []
+    }
+    
     const metrics = {
       total_tasks: tasks.length,
-      overdue_tasks: tasks.filter(t => t.is_overdue).length,
+      overdue_tasks: tasks.filter(t => t && t.is_overdue).length,
       by_status: {
-        todo: tasks.filter(t => t.status === 'todo').length,
-        in_progress: tasks.filter(t => t.status === 'in_progress').length,
-        review: tasks.filter(t => t.status === 'review').length,
-        done: tasks.filter(t => t.status === 'done').length,
+        todo: tasks.filter(t => t && t.status === 'todo').length,
+        in_progress: tasks.filter(t => t && t.status === 'in_progress').length,
+        review: tasks.filter(t => t && t.status === 'review').length,
+        done: tasks.filter(t => t && t.status === 'done').length,
       },
       by_priority: {
-        low: tasks.filter(t => t.priority === 'low').length,
-        normal: tasks.filter(t => t.priority === 'normal').length,
-        high: tasks.filter(t => t.priority === 'high').length,
-        urgent: tasks.filter(t => t.priority === 'urgent').length,
+        low: tasks.filter(t => t && t.priority === 'low').length,
+        normal: tasks.filter(t => t && t.priority === 'normal').length,
+        high: tasks.filter(t => t && t.priority === 'high').length,
+        urgent: tasks.filter(t => t && t.priority === 'urgent').length,
       },
     }
     
@@ -65,7 +76,17 @@ export const getTasks = async (filters = {}) => {
         Authorization: `Bearer ${token}`,
       },
     })
-    return response.data.data
+    
+    // Handle different response structures
+    let tasks = response.data.data || []
+    
+    // If data is an object with a 'tasks' property, extract it
+    if (tasks && typeof tasks === 'object' && !Array.isArray(tasks)) {
+      tasks = tasks.tasks || tasks.data || []
+    }
+    
+    // Ensure tasks is an array
+    return Array.isArray(tasks) ? tasks : []
   } catch (error) {
     console.error('[TasksService] Failed to fetch tasks:', error)
     throw error
@@ -102,7 +123,7 @@ export const updateTaskStatus = async (taskId, status) => {
   try {
     const token = localStorage.getItem('admin_token')
     const response = await axios.patch(
-      `${API_BASE_URL}/api/v1/admin/tasks/${taskId}/status`,
+      `${API_BASE_URL}/api/v1/admin/tasks/${taskId}`,
       { status },
       {
         headers: {
@@ -126,7 +147,7 @@ export const updateTaskStatus = async (taskId, status) => {
 export const updateTask = async (taskId, taskData) => {
   try {
     const token = localStorage.getItem('admin_token')
-    const response = await axios.put(
+    const response = await axios.patch(
       `${API_BASE_URL}/api/v1/admin/tasks/${taskId}`,
       taskData,
       {
