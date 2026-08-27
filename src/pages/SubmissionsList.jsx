@@ -26,6 +26,7 @@ import Skeleton from '../components/shared/Skeleton'
 import EmptyState from '../components/shared/EmptyState'
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '../components/shared/Modal/Modal'
 import { useToast } from '../contexts/ToastContext'
+import { useAuth } from '../contexts/AuthContext'
 import { fetchSubmissions } from '../services/submissionsService'
 import './SubmissionsList.css'
 
@@ -41,6 +42,8 @@ const ITEMS_PER_PAGE = 10
 
 export default function SubmissionsList() {
   const { toast } = useToast()
+  const { user } = useAuth()
+  const isSubAdmin = user?.role === 'sub_admin'
   const [loading, setLoading] = useState(true)
   const [submissions, setSubmissions] = useState([])
   const [filteredSubmissions, setFilteredSubmissions] = useState([])
@@ -237,25 +240,27 @@ export default function SubmissionsList() {
               </Select>
             </div>
 
-            <div className="filter-group">
-              <label className="filter-group__label">Assigned To</label>
-              <Select
-                value={filters.assignedTo}
-                onChange={(e) => handleFilterChange('assignedTo', e.target.value)}
-              >
-                <option value="all">All Staff</option>
-                <option value="unassigned">Unassigned</option>
-                {submissions
-                  .filter(s => s.assigned_to)
-                  .map(s => s.assigned_to)
-                  .filter((staff, index, self) => self.findIndex(s => s.id === staff.id) === index)
-                  .map((staff) => (
-                    <option key={staff.id} value={staff.id}>
-                      {staff.first_name} {staff.last_name}
-                    </option>
-                  ))}
-              </Select>
-            </div>
+            {!isSubAdmin && (
+              <div className="filter-group">
+                <label className="filter-group__label">Assigned To</label>
+                <Select
+                  value={filters.assignedTo}
+                  onChange={(e) => handleFilterChange('assignedTo', e.target.value)}
+                >
+                  <option value="all">All Staff</option>
+                  <option value="unassigned">Unassigned</option>
+                  {submissions
+                    .filter(s => s.assigned_to)
+                    .map(s => s.assigned_to)
+                    .filter((staff, index, self) => self.findIndex(s => s.id === staff.id) === index)
+                    .map((staff) => (
+                      <option key={staff.id} value={staff.id}>
+                        {staff.first_name} {staff.last_name}
+                      </option>
+                    ))}
+                </Select>
+              </div>
+            )}
 
             <div className="filter-group filter-group__clear">
               <Button variant="ghost" size="sm" onClick={handleClearFilters}>
@@ -312,7 +317,7 @@ export default function SubmissionsList() {
                   <th>Target Position</th>
                   <th>Company</th>
                   <th>Status</th>
-                  <th>Assigned To</th>
+                  {!isSubAdmin && <th>Assigned To</th>}
                   <th>Submitted</th>
                   <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
@@ -348,24 +353,26 @@ export default function SubmissionsList() {
                     <td>
                       <Badge variant={submission.status}>{submission.status}</Badge>
                     </td>
-                    <td>
-                      {submission.assigned_to ? (
-                        <div className="table-cell-assigned">
-                          <div className="table-cell-assigned__names">
-                            <div className="table-cell-assigned__name-bold">
-                              {submission.assigned_to.first_name}
-                            </div>
-                            <div className="table-cell-assigned__name-bold">
-                              {submission.assigned_to.last_name}
+                    {!isSubAdmin && (
+                      <td>
+                        {submission.assigned_to ? (
+                          <div className="table-cell-assigned">
+                            <div className="table-cell-assigned__names">
+                              <div className="table-cell-assigned__name-bold">
+                                {submission.assigned_to.first_name}
+                              </div>
+                              <div className="table-cell-assigned__name-bold">
+                                {submission.assigned_to.last_name}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ) : (
-                        <span style={{ color: 'var(--color-text-tertiary)', fontSize: 'var(--text-sm)' }}>
-                          Unassigned
-                        </span>
-                      )}
-                    </td>
+                        ) : (
+                          <span style={{ color: 'var(--color-text-tertiary)', fontSize: 'var(--text-sm)' }}>
+                            Unassigned
+                          </span>
+                        )}
+                      </td>
+                    )}
                     <td>
                       <div className="table-cell-time">
                         {formatDistanceToNow(parseISO(submission.created_at), { addSuffix: true })}

@@ -28,7 +28,7 @@ const getInitials = (name) => {
     .toUpperCase() || 'U'
 }
 
-export default function Chat({ submissionId, jwtToken, staffName = 'Support' }) {
+export default function Chat({ submissionId, jwtToken, staffName = 'Support', assignedTo = null, currentUserId = null }) {
   const [messages, setMessages] = useState([])
   const [inputMessage, setInputMessage] = useState('')
   const [selectedFiles, setSelectedFiles] = useState([])
@@ -39,6 +39,10 @@ export default function Chat({ submissionId, jwtToken, staffName = 'Support' }) 
   const [error, setError] = useState(null)
   const [readReceipt, setReadReceipt] = useState(null)
 
+  // Determine if chat is read-only
+  // Read-only if: assigned to someone else (not current user and not unassigned)
+  const isReadOnly = assignedTo && assignedTo.id !== currentUserId
+  
   const messagesEndRef = useRef(null)
   const fileInputRef = useRef(null)
   const typingTimeoutRef = useRef(null)
@@ -308,6 +312,21 @@ export default function Chat({ submissionId, jwtToken, staffName = 'Support' }) 
 
       {/* Input Area */}
       <div className="chat__input-area">
+        {isReadOnly && (
+          <div style={{
+            padding: 'var(--space-3)',
+            background: 'rgba(59, 130, 246, 0.1)',
+            border: '1px solid rgba(59, 130, 246, 0.3)',
+            borderRadius: 'var(--radius-md)',
+            color: 'rgb(37, 99, 235)',
+            fontSize: 'var(--text-sm)',
+            marginBottom: 'var(--space-3)',
+            textAlign: 'center'
+          }}>
+            This submission is assigned to {assignedTo?.first_name} {assignedTo?.last_name}. You can only read messages.
+          </div>
+        )}
+
         {selectedFiles.length > 0 && (
           <div className="chat__file-preview">
             {selectedFiles.map((file, index) => (
@@ -330,10 +349,10 @@ export default function Chat({ submissionId, jwtToken, staffName = 'Support' }) 
           <div className="chat__input-field">
             <textarea
               className="chat__input-textarea"
-              placeholder="Type your message..."
+              placeholder={isReadOnly ? "Read-only mode - assigned to another staff member" : "Type your message..."}
               value={inputMessage}
               onChange={handleTyping}
-              disabled={isSending || !isConnected}
+              disabled={isSending || !isConnected || isReadOnly}
               rows={1}
               style={{ minHeight: '40px', maxHeight: '100px' }}
             />
@@ -346,14 +365,14 @@ export default function Chat({ submissionId, jwtToken, staffName = 'Support' }) 
               multiple
               className="chat__file-input"
               onChange={handleFileSelect}
-              disabled={isSending}
+              disabled={isSending || isReadOnly}
             />
             <button
               type="button"
               className="chat__file-button"
               onClick={() => fileInputRef.current?.click()}
-              disabled={isSending || !isConnected}
-              title="Attach files"
+              disabled={isSending || !isConnected || isReadOnly}
+              title={isReadOnly ? "Read-only mode" : "Attach files"}
             >
               <Paperclip size={18} />
             </button>
@@ -361,8 +380,8 @@ export default function Chat({ submissionId, jwtToken, staffName = 'Support' }) 
             <button
               type="submit"
               className="chat__send-button"
-              disabled={isSending || !isConnected || (!inputMessage.trim() && selectedFiles.length === 0)}
-              title="Send message"
+              disabled={isSending || !isConnected || (!inputMessage.trim() && selectedFiles.length === 0) || isReadOnly}
+              title={isReadOnly ? "Read-only mode" : "Send message"}
             >
               {isSending ? (
                 <Loader size={18} className="animate-spin" />

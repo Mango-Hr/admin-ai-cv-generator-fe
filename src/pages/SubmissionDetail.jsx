@@ -297,30 +297,51 @@ export default function SubmissionDetail() {
                 <div className="timeline">
                   {submission.activities && submission.activities.length > 0 ? (
                     <>
-                      {submission.activities.slice(0, showAllActivities ? submission.activities.length : 4).map((activity, index) => (
-                        <div key={activity.id} className={`timeline__item timeline__item--${activity.activity_type === 'status_changed' ? 'progress' : activity.activity_type === 'assigned' ? 'assigned' : 'created'}`}>
-                          <div className="timeline__icon">
-                            {activity.activity_type === 'status_changed' ? (
-                              <Play size={20} />
-                            ) : activity.activity_type === 'assigned' ? (
-                              <UserPlus size={20} />
-                            ) : (
-                              <FileText size={20} />
-                            )}
-                          </div>
-                          <div className="timeline__content">
-                            <div className="timeline__title">{activity.title}</div>
-                            <div className="timeline__description">{activity.description}</div>
-                            <div className="timeline__meta">
-                              {formatDistanceToNow(parseISO(activity.created_at), { addSuffix: true })} •{' '}
-                              {format(parseISO(activity.created_at), 'PPP p')}
-                              {activity.actor_name && ` • by ${activity.actor_name}`}
+                      {submission.activities
+                        .filter(activity => {
+                          // Everyone can see "Submission Created" event
+                          if (activity.activity_type === 'created') return true
+                          
+                          // Super admin sees all activities
+                          if (user?.role === 'super_admin') return true
+                          
+                          // Sub admin only sees their own activities (plus the creation event)
+                          if (user?.role === 'sub_admin') {
+                            return activity.actor_id === user.id
+                          }
+                          
+                          return false
+                        })
+                        .slice(0, showAllActivities ? submission.activities.length : 4)
+                        .map((activity, index) => (
+                          <div key={activity.id} className={`timeline__item timeline__item--${activity.activity_type === 'status_changed' ? 'progress' : activity.activity_type === 'assigned' ? 'assigned' : 'created'}`}>
+                            <div className="timeline__icon">
+                              {activity.activity_type === 'status_changed' ? (
+                                <Play size={20} />
+                              ) : activity.activity_type === 'assigned' ? (
+                                <UserPlus size={20} />
+                              ) : (
+                                <FileText size={20} />
+                              )}
+                            </div>
+                            <div className="timeline__content">
+                              <div className="timeline__title">{activity.title}</div>
+                              <div className="timeline__description">{activity.description}</div>
+                              <div className="timeline__meta">
+                                {formatDistanceToNow(parseISO(activity.created_at), { addSuffix: true })} •{' '}
+                                {format(parseISO(activity.created_at), 'PPP p')}
+                                {activity.actor_name && ` • by ${activity.actor_name}`}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
                       
-                      {submission.activities.length > 4 && (
+                      {submission.activities.filter(activity => {
+                        if (activity.activity_type === 'created') return true
+                        if (user?.role === 'super_admin') return true
+                        if (user?.role === 'sub_admin') return activity.actor_id === user.id
+                        return false
+                      }).length > 4 && (
                         <div className="timeline__toggle">
                           <button 
                             className="timeline__toggle-btn"
@@ -378,67 +399,69 @@ export default function SubmissionDetail() {
 
           {/* Sidebar */}
           <div className="submission-detail__sidebar">
-            {/* Assign Staff */}
-            <Card>
-              <Card.Header title="Assignment" icon={<UserPlus />} />
-              <Card.Body>
-                <div className="assign-section">
-                  {submission.assigned_to ? (
-                    <div className="assign-current">
-                      <Avatar fallback={`${submission.assigned_to.first_name} ${submission.assigned_to.last_name}`} size="md" />
-                      <div className="assign-current__info">
-                        <div className="assign-current__name">{submission.assigned_to.first_name} {submission.assigned_to.last_name}</div>
-                        <div className="assign-current__role">{submission.assigned_to.role}</div>
+            {/* Assign Staff - Only visible to super_admin */}
+            {user?.role === 'super_admin' && (
+              <Card>
+                <Card.Header title="Assignment" icon={<UserPlus />} />
+                <Card.Body>
+                  <div className="assign-section">
+                    {submission.assigned_to ? (
+                      <div className="assign-current">
+                        <Avatar fallback={`${submission.assigned_to.first_name} ${submission.assigned_to.last_name}`} size="md" />
+                        <div className="assign-current__info">
+                          <div className="assign-current__name">{submission.assigned_to.first_name} {submission.assigned_to.last_name}</div>
+                          <div className="assign-current__role">{submission.assigned_to.role}</div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="assign-empty">
+                        Not assigned yet
+                      </div>
+                    )}
+                    <div className="assign-form">
+                      <div className="staff-dropdown">
+                        <label className="staff-dropdown__label">Assign to Staff Member</label>
+                        <select
+                          value={selectedStaff}
+                          onChange={(e) => setSelectedStaff(e.target.value)}
+                          className="staff-dropdown__select"
+                        >
+                          <option value="">Select a staff member...</option>
+                          {staff.map((member) => (
+                            <option key={member.id} value={member.id}>
+                              {member.first_name} {member.last_name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                        <Button 
+                          variant="primary" 
+                          size="sm" 
+                          onClick={handleAssign}
+                          disabled={!selectedStaff || assigningStaffId}
+                          loading={assigningStaffId === selectedStaff}
+                          style={{ flex: 1 }}
+                        >
+                          Assign
+                        </Button>
+                        {submission.assigned_to && (
+                          <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            onClick={handleUnassign}
+                            disabled={assigningStaffId}
+                            loading={assigningStaffId === 'unassign'}
+                          >
+                            Unassign
+                          </Button>
+                        )}
                       </div>
                     </div>
-                  ) : (
-                    <div className="assign-empty">
-                      Not assigned yet
-                    </div>
-                  )}
-                  <div className="assign-form">
-                    <div className="staff-dropdown">
-                      <label className="staff-dropdown__label">Assign to Staff Member</label>
-                      <select
-                        value={selectedStaff}
-                        onChange={(e) => setSelectedStaff(e.target.value)}
-                        className="staff-dropdown__select"
-                      >
-                        <option value="">Select a staff member...</option>
-                        {staff.map((member) => (
-                          <option key={member.id} value={member.id}>
-                            {member.first_name} {member.last_name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-                      <Button 
-                        variant="primary" 
-                        size="sm" 
-                        onClick={handleAssign}
-                        disabled={!selectedStaff || assigningStaffId}
-                        loading={assigningStaffId === selectedStaff}
-                        style={{ flex: 1 }}
-                      >
-                        Assign
-                      </Button>
-                      {submission.assigned_to && (
-                        <Button 
-                          variant="secondary" 
-                          size="sm" 
-                          onClick={handleUnassign}
-                          disabled={assigningStaffId}
-                          loading={assigningStaffId === 'unassign'}
-                        >
-                          Unassign
-                        </Button>
-                      )}
-                    </div>
                   </div>
-                </div>
-              </Card.Body>
-            </Card>
+                </Card.Body>
+              </Card>
+            )}
 
             {/* Status Update */}
             <Card>

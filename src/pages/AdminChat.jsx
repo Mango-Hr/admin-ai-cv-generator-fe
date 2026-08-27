@@ -83,6 +83,8 @@ export default function AdminChat() {
               submissionId={submission.id}
               jwtToken={localStorage.getItem('admin_token')}
               staffName={`${user.first_name} ${user.last_name}`}
+              assignedTo={submission.assigned_to}
+              currentUserId={user.id}
             />
           )}
         </div>
