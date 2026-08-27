@@ -16,11 +16,23 @@ export const getPromptStats = async () => {
       },
     })
     
-    const prompts = response.data.data || []
+    // Handle different response structures
+    let prompts = response.data.data || []
+    
+    // If data is an object with a 'prompts' property, extract it
+    if (prompts && typeof prompts === 'object' && !Array.isArray(prompts)) {
+      prompts = prompts.prompts || prompts.data || []
+    }
+    
+    // Ensure prompts is an array
+    if (!Array.isArray(prompts)) {
+      prompts = []
+    }
+    
     const stats = {
       total_prompts: prompts.length,
-      active_prompts: prompts.filter(p => p.is_active).length,
-      total_usage: prompts.reduce((sum, p) => sum + (p.usage_count || 0), 0),
+      active_prompts: prompts.filter(p => p && p.is_active).length,
+      total_usage: prompts.reduce((sum, p) => sum + (p && p.usage_count || 0), 0),
     }
     
     return stats
@@ -51,7 +63,17 @@ export const getPrompts = async (filters = {}) => {
         Authorization: `Bearer ${token}`,
       },
     })
-    return response.data.data
+    
+    // Handle different response structures
+    let prompts = response.data.data || []
+    
+    // If data is an object with a 'prompts' property, extract it
+    if (prompts && typeof prompts === 'object' && !Array.isArray(prompts)) {
+      prompts = prompts.prompts || prompts.data || []
+    }
+    
+    // Ensure prompts is an array
+    return Array.isArray(prompts) ? prompts : []
   } catch (error) {
     console.error('[PromptService] Failed to fetch prompts:', error)
     throw error
@@ -87,7 +109,7 @@ export const createPrompt = async (promptData) => {
 export const updatePrompt = async (promptId, promptData) => {
   try {
     const token = localStorage.getItem('admin_token')
-    const response = await axios.put(
+    const response = await axios.patch(
       `${API_BASE_URL}/api/v1/admin/prompts/${promptId}`,
       promptData,
       {

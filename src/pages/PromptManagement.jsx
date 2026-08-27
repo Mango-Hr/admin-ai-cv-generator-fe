@@ -38,7 +38,6 @@ export default function PromptManagement() {
     prompt_text: '',
     description: '',
     is_active: true,
-    is_default: false,
   })
 
   useEffect(() => {
@@ -98,7 +97,6 @@ export default function PromptManagement() {
         prompt_text: '',
         description: '',
         is_active: true,
-        is_default: false,
       })
       setEditingPrompt(null)
       setShowNewPromptForm(false)
@@ -149,7 +147,6 @@ export default function PromptManagement() {
       prompt_text: prompt.prompt_text,
       description: prompt.description,
       is_active: prompt.is_active,
-      is_default: prompt.is_default,
     })
     setEditingPrompt(prompt)
     setShowNewPromptForm(true)
@@ -192,7 +189,6 @@ export default function PromptManagement() {
                 prompt_text: '',
                 description: '',
                 is_active: true,
-                is_default: false,
               })
               setShowNewPromptForm(true)
             }}
