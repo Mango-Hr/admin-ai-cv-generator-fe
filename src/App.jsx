@@ -100,7 +100,7 @@ function App() {
             <Route
               path="/admin/chat/:referenceId"
               element={
-                <ProtectedRoute requireRole="super_admin">
+                <ProtectedRoute requireRole={['super_admin', 'sub_admin']}>
                   <AdminChat />
                 </ProtectedRoute>
               }
