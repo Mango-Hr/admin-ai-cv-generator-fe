@@ -21,7 +21,7 @@ import { useToast } from '../contexts/ToastContext'
 import { getPrompts, getPromptStats, createPrompt, updatePrompt, activatePrompt, deactivatePrompt, deletePrompt } from '../services/promptService'
 import './PromptManagement.css'
 
-const CATEGORIES = ['tech', 'executive', 'marketing_sales', 'general', 'creative']
+const CATEGORIES = ['technology', 'executive', 'marketing_sales', 'general', 'creative']
 
 export default function PromptManagement() {
   const { toast } = useToast()

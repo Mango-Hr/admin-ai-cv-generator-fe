@@ -82,16 +82,6 @@ export default function SubmissionsList() {
       const submissionsData = data.submissions || []
       
       setSubmissions(submissionsData)
-      
-      // Calculate status counts
-      const counts = {
-        all: submissionsData.length,
-        new: submissionsData.filter(s => s.status === 'new').length,
-        in_progress: submissionsData.filter(s => s.status === 'in_progress').length,
-        review: submissionsData.filter(s => s.status === 'review').length,
-        completed: submissionsData.filter(s => s.status === 'completed').length,
-      }
-      setStatusCounts(counts)
     } catch (error) {
       toast.error('Failed to load submissions')
       console.error(error)
@@ -116,18 +106,28 @@ export default function SubmissionsList() {
       )
     }
 
-    // Status filter
-    if (filters.status !== 'all') {
-      result = result.filter(s => s.status === filters.status)
-    }
-
-    // Assigned filter
+    // Assigned filter (applied before status for accurate counts)
     if (filters.assignedTo !== 'all') {
       if (filters.assignedTo === 'unassigned') {
         result = result.filter(s => !s.assigned_to)
       } else {
         result = result.filter(s => s.assigned_to?.id === filters.assignedTo)
       }
+    }
+
+    // Calculate status counts based on filtered results (excluding status filter)
+    const counts = {
+      all: result.length,
+      new: result.filter(s => s.status === 'new').length,
+      in_progress: result.filter(s => s.status === 'in_progress').length,
+      review: result.filter(s => s.status === 'review').length,
+      completed: result.filter(s => s.status === 'completed').length,
+    }
+    setStatusCounts(counts)
+
+    // Status filter (applied after count calculation)
+    if (filters.status !== 'all') {
+      result = result.filter(s => s.status === filters.status)
     }
 
     setFilteredSubmissions(result)
