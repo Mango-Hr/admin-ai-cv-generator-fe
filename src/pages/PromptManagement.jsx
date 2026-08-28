@@ -34,11 +34,10 @@ export default function PromptManagement() {
   const [editingPrompt, setEditingPrompt] = useState(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState(null)
   const [formData, setFormData] = useState({
-    title: '',
-    target_position: '',
-    category: 'general',
-    prompt_text: '',
+    name: '',
     description: '',
+    category: 'general',
+    content: '',
     is_active: true,
   })
   const [errors, setErrors] = useState({})
@@ -76,12 +75,12 @@ export default function PromptManagement() {
   const validateForm = () => {
     const newErrors = {}
 
-    if (!formData.title.trim()) {
-      newErrors.title = 'Prompt title is required'
+    if (!formData.name.trim()) {
+      newErrors.name = 'Prompt name is required'
     }
 
-    if (!formData.prompt_text.trim()) {
-      newErrors.prompt_text = 'Prompt text is required'
+    if (!formData.content.trim()) {
+      newErrors.content = 'Prompt content is required'
     }
 
     if (!formData.category) {
@@ -108,11 +107,10 @@ export default function PromptManagement() {
 
   const resetForm = () => {
     setFormData({
-      title: '',
-      target_position: '',
-      category: 'general',
-      prompt_text: '',
+      name: '',
       description: '',
+      category: 'general',
+      content: '',
       is_active: true,
     })
     setErrors({})
@@ -183,11 +181,10 @@ export default function PromptManagement() {
 
   const handleEditPrompt = (prompt) => {
     setFormData({
-      title: prompt.title,
-      target_position: prompt.target_position,
-      category: prompt.category,
-      prompt_text: prompt.prompt_text,
+      name: prompt.name,
       description: prompt.description,
+      category: prompt.category,
+      content: prompt.content,
       is_active: prompt.is_active,
     })
     setEditingPrompt(prompt)
@@ -277,11 +274,10 @@ export default function PromptManagement() {
             onClick={() => {
               setEditingPrompt(null)
               setFormData({
-                title: '',
-                target_position: '',
-                category: 'general',
-                prompt_text: '',
+                name: '',
                 description: '',
+                category: 'general',
+                content: '',
                 is_active: true,
               })
               setErrors({})
@@ -346,9 +342,8 @@ export default function PromptManagement() {
           <table className="prompts-table">
             <thead>
               <tr>
-                <th>Title</th>
+                <th>Name</th>
                 <th>Category</th>
-                <th>Target Position</th>
                 <th>Usage</th>
                 <th>Status</th>
                 <th style={{ textAlign: 'right' }}>Actions</th>
@@ -366,12 +361,7 @@ export default function PromptManagement() {
                   <tr key={prompt.id}>
                     <td>
                       <div style={{ fontWeight: 600 }}>
-                        {prompt.title}
-                        {prompt.is_default && (
-                          <Badge size="sm" variant="new" style={{ marginLeft: 'var(--space-2)' }}>
-                            Default
-                          </Badge>
-                        )}
+                        {prompt.name}
                       </div>
                       {prompt.description && (
                         <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
@@ -383,9 +373,6 @@ export default function PromptManagement() {
                       <Badge variant="ghost">
                         {prompt.category.replace('_', ' ').toUpperCase()}
                       </Badge>
-                    </td>
-                    <td style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
-                      {prompt.target_position}
                     </td>
                     <td style={{ fontWeight: 600 }}>
                       {prompt.usage_count}
@@ -451,18 +438,18 @@ export default function PromptManagement() {
               <div className="prompt-modal-body">
                 <form onSubmit={handleCreateOrUpdate} className="prompt-form">
                   <div className="form-group">
-                    <label>Prompt Title *</label>
+                    <label>Prompt Name *</label>
                     <Input
                       placeholder="e.g., Tech Engineering Master Prompt"
-                      value={formData.title}
-                      onChange={(e) => handleFieldChange('title', e.target.value)}
-                      error={errors.title}
+                      value={formData.name}
+                      onChange={(e) => handleFieldChange('name', e.target.value)}
+                      error={errors.name}
                     />
                   </div>
 
                   <div className="form-row">
                     <div className="form-group">
-                      <label>Category</label>
+                      <label>Category *</label>
                       <Select
                         value={formData.category}
                         onChange={(e) => handleFieldChange('category', e.target.value)}
@@ -477,15 +464,6 @@ export default function PromptManagement() {
                         <div className="form-error">{errors.category}</div>
                       )}
                     </div>
-
-                    <div className="form-group">
-                      <label>Target Position</label>
-                      <Input
-                        placeholder="e.g., Software Engineer, DevOps Engineer"
-                        value={formData.target_position}
-                        onChange={(e) => handleFieldChange('target_position', e.target.value)}
-                      />
-                    </div>
                   </div>
 
                   <div className="form-group">
@@ -498,17 +476,17 @@ export default function PromptManagement() {
                   </div>
 
                   <div className="form-group">
-                    <label>Prompt Text *</label>
+                    <label>Content *</label>
                     <textarea
-                      placeholder="Enter the system prompt instructions..."
-                      value={formData.prompt_text}
-                      onChange={(e) => handleFieldChange('prompt_text', e.target.value)}
-                      className={errors.prompt_text ? 'textarea-error' : ''}
+                      placeholder="Enter the prompt content..."
+                      value={formData.content}
+                      onChange={(e) => handleFieldChange('content', e.target.value)}
+                      className={errors.content ? 'textarea-error' : ''}
                       style={{
                         width: '100%',
                         minHeight: '200px',
                         padding: 'var(--space-3)',
-                        border: errors.prompt_text ? '2px solid #EF4444' : '1px solid var(--color-border)',
+                        border: errors.content ? '2px solid #EF4444' : '1px solid var(--color-border)',
                         borderRadius: 'var(--radius-md)',
                         fontFamily: 'monospace',
                         fontSize: 'var(--text-sm)',
@@ -516,8 +494,8 @@ export default function PromptManagement() {
                         backgroundColor: 'var(--color-bg)',
                       }}
                     />
-                    {errors.prompt_text && (
-                      <div className="form-error">{errors.prompt_text}</div>
+                    {errors.content && (
+                      <div className="form-error">{errors.content}</div>
                     )}
                   </div>
 
