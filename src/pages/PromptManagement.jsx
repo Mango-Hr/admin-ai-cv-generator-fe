@@ -45,16 +45,18 @@ export default function PromptManagement() {
 
   useEffect(() => {
     loadData()
-  }, [selectedCategory])
+  }, [])
+
+  useEffect(() => {
+    // Don't call loadData() - stats should stay constant
+    // Filtering happens locally via filteredPrompts
+  }, [selectedCategory, searchTerm])
 
   const loadData = async () => {
     setLoading(true)
     try {
       const [promptsData, statsData] = await Promise.all([
-        getPrompts({
-          category: selectedCategory !== 'all' ? selectedCategory : undefined,
-          search: searchTerm,
-        }),
+        getPrompts(),
         getPromptStats(),
       ])
       setPrompts(promptsData)
@@ -69,7 +71,6 @@ export default function PromptManagement() {
 
   const handleSearchChange = (value) => {
     setSearchTerm(value)
-    setTimeout(() => loadData(), 300)
   }
 
   const validateForm = () => {
@@ -139,7 +140,6 @@ export default function PromptManagement() {
         toast.success('Prompt created successfully')
       }
       resetForm()
-      loadData()
     } catch (error) {
       toast.error(editingPrompt ? 'Failed to update prompt' : 'Failed to create prompt')
       console.error(error)
@@ -172,7 +172,6 @@ export default function PromptManagement() {
       setPrompts(prev => prev.filter(p => p.id !== promptId))
       toast.success('Prompt deleted successfully')
       setDeleteConfirmId(null)
-      loadData()
     } catch (error) {
       toast.error('Failed to delete prompt')
       console.error(error)
@@ -192,11 +191,17 @@ export default function PromptManagement() {
     setShowNewPromptForm(true)
   }
 
-  const filteredPrompts = prompts.filter(p =>
-    searchTerm === '' || 
-    p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredPrompts = prompts.filter(p => {
+    // Filter by search term
+    const matchesSearch = searchTerm === '' || 
+      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    // Filter by category
+    const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory
+    
+    return matchesSearch && matchesCategory
+  })
 
   if (loading) {
     return (
@@ -311,7 +316,7 @@ export default function PromptManagement() {
           <div className="filter-group">
             <label className="filter-group__label">Search</label>
             <Input
-              placeholder="Search by title or description..."
+              placeholder="Search by name or description..."
               icon={<Search />}
               value={searchTerm}
               onChange={(e) => handleSearchChange(e.target.value)}
