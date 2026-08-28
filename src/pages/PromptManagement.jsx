@@ -21,8 +21,6 @@ import { useToast } from '../contexts/ToastContext'
 import { getPrompts, getPromptStats, createPrompt, updatePrompt, activatePrompt, deactivatePrompt, deletePrompt } from '../services/promptService'
 import './PromptManagement.css'
 
-const CATEGORIES = ['technology', 'executive', 'marketing_sales', 'general', 'creative']
-
 export default function PromptManagement() {
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
@@ -30,6 +28,7 @@ export default function PromptManagement() {
   const [stats, setStats] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
+  const [availableCategories, setAvailableCategories] = useState([])
   const [showNewPromptForm, setShowNewPromptForm] = useState(false)
   const [editingPrompt, setEditingPrompt] = useState(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState(null)
@@ -48,9 +47,13 @@ export default function PromptManagement() {
   }, [])
 
   useEffect(() => {
-    // Don't call loadData() - stats should stay constant
-    // Filtering happens locally via filteredPrompts
-  }, [selectedCategory, searchTerm])
+    // Log and extract available categories for debugging
+    if (prompts.length > 0) {
+      const uniqueCategories = [...new Set(prompts.map(p => p.category?.toLowerCase()).filter(Boolean))]
+      setAvailableCategories(uniqueCategories.sort())
+      console.log('Available categories in prompts:', uniqueCategories)
+    }
+  }, [prompts])
 
   const loadData = async () => {
     setLoading(true)
@@ -197,8 +200,9 @@ export default function PromptManagement() {
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.description?.toLowerCase().includes(searchTerm.toLowerCase())
     
-    // Filter by category
-    const matchesCategory = selectedCategory === 'all' || p.category === selectedCategory
+    // Filter by category (case-insensitive)
+    const matchesCategory = selectedCategory === 'all' || 
+      p.category?.toLowerCase() === selectedCategory.toLowerCase()
     
     return matchesSearch && matchesCategory
   })
@@ -329,7 +333,7 @@ export default function PromptManagement() {
               onChange={(e) => setSelectedCategory(e.target.value)}
             >
               <option value="all">All Categories</option>
-              {CATEGORIES.map(cat => (
+              {availableCategories.map(cat => (
                 <option key={cat} value={cat}>
                   {cat.replace('_', ' ').toUpperCase()}
                 </option>
@@ -464,11 +468,15 @@ export default function PromptManagement() {
                         value={formData.category}
                         onChange={(e) => handleFieldChange('category', e.target.value)}
                       >
-                        {CATEGORIES.map(cat => (
-                          <option key={cat} value={cat}>
-                            {cat.replace('_', ' ').toUpperCase()}
-                          </option>
-                        ))}
+                        {availableCategories.length > 0 ? (
+                          availableCategories.map(cat => (
+                            <option key={cat} value={cat}>
+                              {cat.replace('_', ' ').toUpperCase()}
+                            </option>
+                          ))
+                        ) : (
+                          <option value="general">GENERAL</option>
+                        )}
                       </Select>
                       {errors.category && (
                         <div className="form-error">{errors.category}</div>
