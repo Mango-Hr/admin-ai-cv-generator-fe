@@ -247,6 +247,12 @@
   .table-actions button {
     padding: var(--space-1);
   }
+
+  /* Hide description on mobile */
+  .prompts-table th:nth-child(3),
+  .prompts-table td:nth-child(3) {
+    display: none;
+  }
 }
 
 /* Modal Overlay */

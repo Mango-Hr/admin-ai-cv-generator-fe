@@ -344,6 +344,7 @@ export default function PromptManagement() {
               <tr>
                 <th>Name</th>
                 <th>Category</th>
+                <th>Description</th>
                 <th>Usage</th>
                 <th>Status</th>
                 <th style={{ textAlign: 'right' }}>Actions</th>
@@ -363,16 +364,20 @@ export default function PromptManagement() {
                       <div style={{ fontWeight: 600 }}>
                         {prompt.name}
                       </div>
-                      {prompt.description && (
-                        <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
-                          {prompt.description}
-                        </div>
-                      )}
                     </td>
                     <td>
                       <Badge variant="ghost">
                         {prompt.category.replace('_', ' ').toUpperCase()}
                       </Badge>
+                    </td>
+                    <td style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)', maxWidth: '300px' }}>
+                      <div style={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {prompt.description || '-'}
+                      </div>
                     </td>
                     <td style={{ fontWeight: 600 }}>
                       {prompt.usage_count}
