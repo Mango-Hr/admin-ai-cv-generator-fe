@@ -33,6 +33,7 @@ import { useToast } from '../contexts/ToastContext'
 import { useAuth } from '../contexts/AuthContext'
 import { fetchSubmissionById, updateSubmissionStatus, assignSubmission, unassignSubmission, deleteSubmission } from '../services/submissionsService'
 import { fetchStaffList } from '../services/staffService'
+import { getPrompts } from '../services/promptService'
 import { triggerAIGeneration, getGenerationHistory, renderDocuments, getSubmissionDocuments, downloadDocument, formatTokenInfo, formatCost } from '../services/aiService'
 import './SubmissionDetail.css'
 
@@ -64,6 +65,8 @@ export default function SubmissionDetail() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isRenderingDocs, setIsRenderingDocs] = useState(false)
   const [aiModel, setAiModel] = useState('gpt-4o')
+  const [selectedPrompt, setSelectedPrompt] = useState('auto')
+  const [availablePrompts, setAvailablePrompts] = useState([])
   const [customInstructions, setCustomInstructions] = useState('')
 
   useEffect(() => {
@@ -73,11 +76,12 @@ export default function SubmissionDetail() {
   const loadData = async () => {
     setLoading(true)
     try {
-      const [submissionData, staffData, historyData, docsData] = await Promise.all([
+      const [submissionData, staffData, historyData, docsData, promptsData] = await Promise.all([
         fetchSubmissionById(id),
         fetchStaffList(),
         getGenerationHistory(id),
         getSubmissionDocuments(id),
+        getPrompts(),
       ])
       
       if (!submissionData) {
@@ -92,6 +96,7 @@ export default function SubmissionDetail() {
       setSelectedStaff(submissionData.assigned_to?.id || '')
       setGenerationHistory(historyData)
       setDocuments(docsData)
+      setAvailablePrompts(promptsData || [])
     } catch (error) {
       toast.error('Failed to load submission details')
       console.error(error)
@@ -167,6 +172,7 @@ export default function SubmissionDetail() {
       const generation = await triggerAIGeneration(id, {
         provider: 'openai',
         model: aiModel,
+        prompt_id: selectedPrompt === 'auto' ? null : selectedPrompt,
         custom_instructions: customInstructions || null,
       })
       
@@ -557,6 +563,29 @@ export default function SubmissionDetail() {
                       <option value="gpt-4o-mini">GPT-4o Mini</option>
                       <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
                     </Select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: 'var(--text-sm)', fontWeight: 600, marginBottom: 'var(--space-2)' }}>
+                      System Prompt
+                    </label>
+                    <Select
+                      value={selectedPrompt}
+                      onChange={(e) => setSelectedPrompt(e.target.value)}
+                    >
+                      <option value="auto">Auto-select (Recommended)</option>
+                      {availablePrompts.filter(p => p.is_active).map(prompt => (
+                        <option key={prompt.id} value={prompt.id}>
+                          {prompt.name} ({prompt.category.replace('_', ' ').toUpperCase()})
+                        </option>
+                      ))}
+                    </Select>
+                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)', marginTop: '4px' }}>
+                      {selectedPrompt === 'auto' 
+                        ? 'Backend will automatically select the best prompt for the target role'
+                        : availablePrompts.find(p => p.id === selectedPrompt)?.description
+                      }
+                    </div>
                   </div>
 
                   <div>
