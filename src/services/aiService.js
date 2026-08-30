@@ -99,21 +99,36 @@ export const getGenerationHistory = async (submissionId) => {
 export const renderDocuments = async (submissionId, aiGenerationId, formats = ['pdf', 'docx']) => {
   try {
     const token = localStorage.getItem('admin_token')
+    const payload = {
+      ai_generation_id: aiGenerationId,
+      formats,
+    }
+
+    console.log('[AIService] Render Documents Payload:', payload)
+    console.table(payload)
+
     const response = await axios.post(
       `${API_BASE_URL}/api/v1/admin/submissions/${submissionId}/documents/render`,
-      {
-        ai_generation_id: aiGenerationId,
-        formats,
-      },
+      payload,
       {
         headers: {
           Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
       }
     )
+    console.log('[AIService] Render successful:', response.data)
     return response.data.data
   } catch (error) {
-    console.error('[AIService] Failed to render documents:', error)
+    console.error('[AIService] RENDER ERROR OCCURRED')
+    console.error('Error:', error)
+    
+    if (error.response) {
+      console.error('Response status:', error.response.status)
+      console.error('Response data:', error.response.data)
+      console.table(error.response.data)
+    }
+    
     throw error
   }
 }
