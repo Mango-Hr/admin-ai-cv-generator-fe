@@ -193,6 +193,9 @@ export default function SubmissionDetail() {
   }
 
   const handleRenderDocuments = async (generationId) => {
+    console.log('[SubmissionDetail] Render Documents - Generation ID:', generationId)
+    console.log('[SubmissionDetail] Generation ID type:', typeof generationId)
+    
     setIsRenderingDocs(true)
     try {
       const rendered = await renderDocuments(id, generationId, ['pdf', 'docx'])
@@ -646,7 +649,9 @@ export default function SubmissionDetail() {
                       Generation History
                     </h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-                      {generationHistory.slice(0, 3).map((gen, idx) => (
+                      {generationHistory.slice(0, 3).map((gen, idx) => {
+                        console.log(`[SubmissionDetail] Generation ${idx}:`, gen)
+                        return (
                         <div key={idx} style={{
                           background: 'var(--color-bg-secondary)',
                           padding: 'var(--space-2)',
@@ -673,7 +678,8 @@ export default function SubmissionDetail() {
                             {isRenderingDocs ? 'Rendering...' : 'Render Documents'}
                           </Button>
                         </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </div>
                 )}
