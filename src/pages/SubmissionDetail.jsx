@@ -68,6 +68,7 @@ export default function SubmissionDetail() {
   const [selectedPrompt, setSelectedPrompt] = useState('auto')
   const [availablePrompts, setAvailablePrompts] = useState([])
   const [customInstructions, setCustomInstructions] = useState('')
+  const [includeChatHistory, setIncludeChatHistory] = useState(true)
 
   useEffect(() => {
     loadData()
@@ -174,6 +175,7 @@ export default function SubmissionDetail() {
         model: aiModel,
         prompt_id: selectedPrompt === 'auto' ? null : selectedPrompt,
         custom_instructions: customInstructions || null,
+        include_chat_history: includeChatHistory,
       })
       
       setGenerationHistory(prev => [generation, ...prev])
@@ -606,6 +608,19 @@ export default function SubmissionDetail() {
                         fontSize: 'var(--text-sm)',
                       }}
                     />
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                    <input
+                      type="checkbox"
+                      id="includeChatHistory"
+                      checked={includeChatHistory}
+                      onChange={(e) => setIncludeChatHistory(e.target.checked)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    <label htmlFor="includeChatHistory" style={{ fontSize: 'var(--text-sm)', cursor: 'pointer' }}>
+                      Include chat history in generation
+                    </label>
                   </div>
 
                   <Button

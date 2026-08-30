@@ -16,6 +16,7 @@ export const triggerAIGeneration = async (submissionId, generationParams = {}) =
       model: generationParams.model || 'gpt-4o',
       prompt_id: generationParams.prompt_id || null,
       custom_instructions: generationParams.custom_instructions || null,
+      include_chat_history: generationParams.include_chat_history !== undefined ? generationParams.include_chat_history : true,
     }
 
     const response = await axios.post(
