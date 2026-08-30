@@ -582,7 +582,7 @@ export default function SubmissionDetail() {
                     </Select>
                     <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)', marginTop: '4px' }}>
                       {selectedPrompt === 'auto' 
-                        ? 'Backend will automatically select the best prompt for the target role'
+                        ? 'The system will automatically select the best prompt for the target role'
                         : availablePrompts.find(p => p.id === selectedPrompt)?.description
                       }
                     </div>
