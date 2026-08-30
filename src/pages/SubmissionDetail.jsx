@@ -181,7 +181,19 @@ export default function SubmissionDetail() {
       setGenerationHistory(prev => [generation, ...prev])
       toast.success('AI CV generated successfully')
     } catch (error) {
-      toast.error('Failed to generate CV')
+      console.error('Full error object:', error)
+      
+      // Check if this is a CV schema validation error
+      if (error.response?.data?.detail?.message?.includes('CV JSON schema validation')) {
+        const message = error.response.data.detail.message
+        // Extract just the validation errors part
+        const schemaErrors = message.split('\n').slice(1, -1).join('\n')
+        toast.error(`CV Generation Failed: The AI model output didn't match the expected format. This usually means the prompt needs adjustment.\n\nDetails:\n${schemaErrors.substring(0, 200)}...`)
+      } else if (error.response?.data?.detail?.message) {
+        toast.error(`Failed to generate CV: ${error.response.data.detail.message}`)
+      } else {
+        toast.error('Failed to generate CV')
+      }
       console.error(error)
     } finally {
       setIsGenerating(false)
