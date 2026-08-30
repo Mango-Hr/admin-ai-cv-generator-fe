@@ -86,7 +86,9 @@ export default function AdminLayout({ children }) {
     }
   }, [user])
 
-  // Fetch task count from API
+  // Fetch task count from API only once on mount
+  // Note: Removed polling to reduce unnecessary API calls to backend
+  // Task count badge will update when user navigates to TaskManagement page
   useEffect(() => {
     const fetchTaskCount = async () => {
       try {
@@ -99,10 +101,6 @@ export default function AdminLayout({ children }) {
 
     if (user) {
       fetchTaskCount()
-      
-      // Refresh task count every 30 seconds to keep it in sync
-      const interval = setInterval(fetchTaskCount, 30000)
-      return () => clearInterval(interval)
     }
   }, [user])
   
