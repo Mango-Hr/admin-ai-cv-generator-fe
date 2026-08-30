@@ -75,6 +75,8 @@ export default function SubmissionDetail() {
   const [includeChatHistory, setIncludeChatHistory] = useState(true)
   const [showGenerationHistory, setShowGenerationHistory] = useState(false)
   const [showAllGenerations, setShowAllGenerations] = useState(false)
+  const [documentFilter, setDocumentFilter] = useState('word')
+  const [showAllDocuments, setShowAllDocuments] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -470,8 +472,54 @@ export default function SubmissionDetail() {
                       </div>
                     )}
 
+                    {/* Generated Documents Filter */}
+                    {documents.length > 0 && (
+                      <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-3)', borderBottom: '1px solid var(--color-border)', paddingBottom: 'var(--space-2)' }}>
+                        <button
+                          onClick={() => setDocumentFilter('word')}
+                          style={{
+                            padding: 'var(--space-2) var(--space-3)',
+                            border: documentFilter === 'word' ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                            background: documentFilter === 'word' ? 'var(--color-primary-light)' : 'transparent',
+                            borderRadius: 'var(--radius-md)',
+                            cursor: 'pointer',
+                            fontSize: 'var(--text-sm)',
+                            fontWeight: 600,
+                            color: documentFilter === 'word' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                            transition: 'all var(--transition-fast)',
+                          }}
+                        >
+                          Word
+                        </button>
+                        <button
+                          onClick={() => setDocumentFilter('pdf')}
+                          style={{
+                            padding: 'var(--space-2) var(--space-3)',
+                            border: documentFilter === 'pdf' ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                            background: documentFilter === 'pdf' ? 'var(--color-primary-light)' : 'transparent',
+                            borderRadius: 'var(--radius-md)',
+                            cursor: 'pointer',
+                            fontSize: 'var(--text-sm)',
+                            fontWeight: 600,
+                            color: documentFilter === 'pdf' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                            transition: 'all var(--transition-fast)',
+                          }}
+                        >
+                          PDF
+                        </button>
+                      </div>
+                    )}
+
                     {/* Generated Documents */}
-                    {documents.map((doc) => (
+                    {documents
+                      .filter(doc => {
+                        if (documentFilter === 'word') return doc.file_type.toLowerCase() === 'docx'
+                        if (documentFilter === 'pdf') return doc.file_type.toLowerCase() === 'pdf'
+                        return true
+                      })
+                      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                      .slice(0, showAllDocuments ? undefined : 5)
+                      .map((doc) => (
                       <div key={doc.id} className="file-item">
                         <div className="file-item__icon">
                           <FileText size={20} />
@@ -501,9 +549,41 @@ export default function SubmissionDetail() {
                       </div>
                     ))}
 
-                    {documents.length === 0 && !submission.existing_cv_url && (
+                    {documents.filter(doc => {
+                      if (documentFilter === 'word') return doc.file_type.toLowerCase() === 'docx'
+                      if (documentFilter === 'pdf') return doc.file_type.toLowerCase() === 'pdf'
+                      return true
+                    }).length > 5 && (
+                      <button
+                        onClick={() => setShowAllDocuments(!showAllDocuments)}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: 'var(--text-xs)',
+                          fontWeight: 600,
+                          color: 'var(--color-primary)',
+                          padding: 'var(--space-2)',
+                          textAlign: 'center',
+                          marginTop: 'var(--space-1)',
+                          width: '100%',
+                        }}
+                      >
+                        {showAllDocuments ? '↑ See Less' : `↓ See More (${documents.filter(doc => {
+                          if (documentFilter === 'word') return doc.file_type.toLowerCase() === 'docx'
+                          if (documentFilter === 'pdf') return doc.file_type.toLowerCase() === 'pdf'
+                          return true
+                        }).length - 5} more)`}
+                      </button>
+                    )}
+
+                    {documents.filter(doc => {
+                      if (documentFilter === 'word') return doc.file_type.toLowerCase() === 'docx'
+                      if (documentFilter === 'pdf') return doc.file_type.toLowerCase() === 'pdf'
+                      return true
+                    }).length === 0 && (
                       <div style={{ textAlign: 'center', padding: 'var(--space-4)', color: 'var(--color-text-tertiary)' }}>
-                        No documents available. Generate AI CV first.
+                        No {documentFilter.toUpperCase()} documents available.
                       </div>
                     )}
                   </div>
