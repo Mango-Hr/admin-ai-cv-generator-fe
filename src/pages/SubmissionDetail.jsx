@@ -650,7 +650,7 @@ export default function SubmissionDetail() {
                     </h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
                       {generationHistory.slice(0, 3).map((gen, idx) => {
-                        console.log(`[SubmissionDetail] Generation ${idx}:`, gen)
+                        const generationId = gen.ai_generation_id || gen.id
                         return (
                         <div key={idx} style={{
                           background: 'var(--color-bg-secondary)',
@@ -670,7 +670,7 @@ export default function SubmissionDetail() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleRenderDocuments(gen.id)}
+                            onClick={() => handleRenderDocuments(generationId)}
                             disabled={isRenderingDocs}
                             loading={isRenderingDocs}
                             style={{ marginTop: '8px', width: '100%' }}
