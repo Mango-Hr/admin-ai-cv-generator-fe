@@ -14,10 +14,23 @@ export const triggerAIGeneration = async (submissionId, generationParams = {}) =
     const payload = {
       provider: generationParams.provider || 'openai',
       model: generationParams.model || 'gpt-4o',
-      prompt_id: generationParams.prompt_id || null,
-      custom_instructions: generationParams.custom_instructions || null,
       include_chat_history: generationParams.include_chat_history !== undefined ? generationParams.include_chat_history : true,
     }
+
+    // Only add optional fields if they have values
+    if (generationParams.prompt_id !== undefined && generationParams.prompt_id !== 'auto') {
+      payload.prompt_id = generationParams.prompt_id
+    } else {
+      payload.prompt_id = null
+    }
+
+    if (generationParams.custom_instructions) {
+      payload.custom_instructions = generationParams.custom_instructions
+    } else {
+      payload.custom_instructions = null
+    }
+
+    console.log('[AIService] Sending payload to backend:', JSON.stringify(payload, null, 2))
 
     const response = await axios.post(
       `${API_BASE_URL}/api/v1/admin/submissions/${submissionId}/generate`,
@@ -25,12 +38,17 @@ export const triggerAIGeneration = async (submissionId, generationParams = {}) =
       {
         headers: {
           Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
       }
     )
     return response.data.data
   } catch (error) {
     console.error('[AIService] Failed to trigger AI generation:', error)
+    if (error.response) {
+      console.error('[AIService] Response status:', error.response.status)
+      console.error('[AIService] Response data:', error.response.data)
+    }
     throw error
   }
 }
