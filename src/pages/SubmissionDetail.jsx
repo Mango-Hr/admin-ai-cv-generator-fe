@@ -195,6 +195,9 @@ export default function SubmissionDetail() {
       const rendered = await renderDocuments(id, generationId, ['pdf', 'docx'])
       setDocuments(prev => [...prev, ...rendered])
       
+      // Show 100% for 1 second before stopping the animation
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
       // Success message directs user to timeline
       toast.success('CV generated successfully. Scroll down to see it in the timeline.')
     } catch (error) {

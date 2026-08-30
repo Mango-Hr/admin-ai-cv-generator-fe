@@ -63,7 +63,7 @@ export default function ProgressiveLoadingButton({
       <Button
         variant={variant}
         size={size}
-        icon={isLoading && Icon ? <Icon className="animate-spin" /> : Icon ? <Icon /> : undefined}
+        icon={!isLoading && Icon ? <Icon /> : undefined}
         onClick={onClick}
         disabled={disabled || isLoading}
         {...props}
