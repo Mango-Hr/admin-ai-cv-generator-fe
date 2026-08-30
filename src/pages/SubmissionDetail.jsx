@@ -548,13 +548,6 @@ export default function SubmissionDetail() {
                                 <Button 
                                   variant="ghost" 
                                   size="sm" 
-                                  icon={<Eye size={16} />}
-                                  onClick={() => handleViewDocument(doc)}
-                                  title="View document"
-                                />
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
                                   icon={<Download size={16} />}
                                   onClick={() => downloadDocument(id, doc.id, doc.file_name)}
                                   title="Download"
