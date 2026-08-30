@@ -30,7 +30,9 @@ export const triggerAIGeneration = async (submissionId, generationParams = {}) =
       payload.custom_instructions = null
     }
 
-    console.log('[AIService] Sending payload to backend:', JSON.stringify(payload, null, 2))
+    console.log('[AIService] Generation Params:', generationParams)
+    console.log('[AIService] Final Payload:', payload)
+    console.table(payload)
 
     const response = await axios.post(
       `${API_BASE_URL}/api/v1/admin/submissions/${submissionId}/generate`,
@@ -42,13 +44,24 @@ export const triggerAIGeneration = async (submissionId, generationParams = {}) =
         },
       }
     )
+    console.log('[AIService] Generation successful:', response.data)
     return response.data.data
   } catch (error) {
-    console.error('[AIService] Failed to trigger AI generation:', error)
+    console.error('[AIService] GENERATION ERROR OCCURRED')
+    console.error('Error object:', error)
+    console.error('Error message:', error.message)
+    
     if (error.response) {
-      console.error('[AIService] Response status:', error.response.status)
-      console.error('[AIService] Response data:', error.response.data)
+      console.error('Response status:', error.response.status)
+      console.error('Response headers:', error.response.headers)
+      console.error('Response data:', error.response.data)
+      console.table(error.response.data)
+    } else if (error.request) {
+      console.error('Request made but no response:', error.request)
+    } else {
+      console.error('Error during request setup:', error.message)
     }
+    
     throw error
   }
 }
