@@ -18,6 +18,9 @@ import {
   Calendar,
   Zap,
   Loader,
+  History,
+  Eye,
+  ChevronDown,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { format, formatDistanceToNow, parseISO } from 'date-fns'
@@ -25,6 +28,7 @@ import AdminLayout from '../components/layout/AdminLayout'
 import Card from '../components/shared/Card'
 import Badge from '../components/shared/Badge'
 import Button from '../components/shared/Button'
+import ProgressiveLoadingButton from '../components/shared/ProgressiveLoadingButton'
 import { default as Avatar } from '../components/shared/Avatar'
 import { Select } from '../components/shared/Input'
 import Skeleton from '../components/shared/Skeleton'
@@ -68,7 +72,7 @@ export default function SubmissionDetail() {
   const [selectedPrompt, setSelectedPrompt] = useState('auto')
   const [availablePrompts, setAvailablePrompts] = useState([])
   const [customInstructions, setCustomInstructions] = useState('')
-  const [includeChatHistory, setIncludeChatHistory] = useState(true)
+  const [showGenerationHistory, setShowGenerationHistory] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -170,6 +174,7 @@ export default function SubmissionDetail() {
   const handleGenerateCV = async () => {
     setIsGenerating(true)
     try {
+      // Step 1: Trigger AI Generation
       const generation = await triggerAIGeneration(id, {
         provider: 'openai',
         model: aiModel,
@@ -178,8 +183,16 @@ export default function SubmissionDetail() {
         include_chat_history: includeChatHistory,
       })
       
+      // Add to history
       setGenerationHistory(prev => [generation, ...prev])
-      toast.success('AI CV generated successfully')
+      
+      // Step 2: Auto-render documents
+      const generationId = generation.ai_generation_id || generation.id
+      const rendered = await renderDocuments(id, generationId, ['pdf', 'docx'])
+      setDocuments(prev => [...prev, ...rendered])
+      
+      // Success message directs user to timeline
+      toast.success('CV generated successfully. Scroll down to see it in the timeline.')
     } catch (error) {
       // Keep all detailed logging in console
       console.error('Full error object:', error)
@@ -192,21 +205,20 @@ export default function SubmissionDetail() {
     }
   }
 
-  const handleRenderDocuments = async (generationId) => {
-    console.log('[SubmissionDetail] Render Documents - Generation ID:', generationId)
-    console.log('[SubmissionDetail] Generation ID type:', typeof generationId)
-    
-    setIsRenderingDocs(true)
-    try {
-      const rendered = await renderDocuments(id, generationId, ['pdf', 'docx'])
-      setDocuments(prev => [...prev, ...rendered])
-      toast.success('Documents rendered successfully')
-    } catch (error) {
-      toast.error('Failed to render documents')
-      console.error(error)
-    } finally {
-      setIsRenderingDocs(false)
+  const handleViewDocument = async (doc) => {
+    // Change status to "in_progress" if it's "new"
+    if (submission.status === 'new') {
+      try {
+        await updateSubmissionStatus(id, 'in_progress')
+        setSubmission(prev => ({ ...prev, status: 'in_progress' }))
+        setSelectedStatus('in_progress')
+      } catch (error) {
+        console.error('Failed to update status:', error)
+      }
     }
+    
+    // Open document in new tab
+    window.open(doc.document_url || doc.file_url, '_blank')
   }
 
   const handleDelete = () => {
@@ -468,13 +480,22 @@ export default function SubmissionDetail() {
                             {doc.file_type.toUpperCase()} • v{doc.version} • {formatDistanceToNow(parseISO(doc.created_at), { addSuffix: true })}
                           </div>
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          icon={<Download />}
-                          onClick={() => downloadDocument(id, doc.id, doc.file_name)}
-                          title="Download"
-                        />
+                        <div style={{ display: 'flex', gap: 'var(--space-1)' }}>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            icon={<Eye size={16} />}
+                            onClick={() => handleViewDocument(doc)}
+                            title="View document"
+                          />
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            icon={<Download size={16} />}
+                            onClick={() => downloadDocument(id, doc.id, doc.file_name)}
+                            title="Download"
+                          />
+                        </div>
                       </div>
                     ))}
 
@@ -630,96 +651,75 @@ export default function SubmissionDetail() {
                     </label>
                   </div>
 
-                  <Button
-                    variant="primary"
-                    icon={isGenerating ? <Loader className="animate-spin" /> : <Zap />}
+                  <ProgressiveLoadingButton
+                    isLoading={isGenerating}
                     onClick={handleGenerateCV}
-                    disabled={isGenerating}
-                    loading={isGenerating}
+                    icon={Zap}
                     style={{ width: '100%' }}
                   >
-                    {isGenerating ? 'Generating...' : 'Generate CV'}
-                  </Button>
+                    Generate CV
+                  </ProgressiveLoadingButton>
                 </div>
 
-                {/* Generation History */}
+                {/* Generation History - Collapsed by Default */}
                 {generationHistory.length > 0 && (
                   <div style={{ marginTop: 'var(--space-4)', paddingTop: 'var(--space-4)', borderTop: '1px solid var(--color-border)' }}>
-                    <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 600, marginBottom: 'var(--space-2)' }}>
-                      Generation History
-                    </h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-                      {generationHistory.slice(0, 3).map((gen, idx) => {
-                        const generationId = gen.ai_generation_id || gen.id
-                        return (
-                        <div key={idx} style={{
-                          background: 'var(--color-bg-secondary)',
-                          padding: 'var(--space-2)',
-                          borderRadius: 'var(--radius-md)',
-                          fontSize: 'var(--text-xs)',
-                        }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                            <span style={{ fontWeight: 600 }}>{gen.model}</span>
-                            <Badge variant={gen.status === 'success' ? 'completed' : 'new'}>
-                              {gen.status}
-                            </Badge>
+                    <button
+                      onClick={() => setShowGenerationHistory(!showGenerationHistory)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--space-2)',
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: 'var(--text-sm)',
+                        fontWeight: 600,
+                        color: 'var(--color-text-primary)',
+                        padding: 0,
+                        marginBottom: showGenerationHistory ? 'var(--space-2)' : 0,
+                      }}
+                    >
+                      <History size={16} />
+                      <span>Generation History Usage</span>
+                      <ChevronDown 
+                        size={16}
+                        style={{
+                          transform: showGenerationHistory ? 'rotate(180deg)' : 'rotate(0deg)',
+                          transition: 'transform var(--transition-fast)',
+                        }}
+                      />
+                      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)', marginLeft: 'auto' }}>
+                        {generationHistory.length} generation{generationHistory.length !== 1 ? 's' : ''}
+                      </span>
+                    </button>
+
+                    {showGenerationHistory && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', marginTop: 'var(--space-2)' }}>
+                        {generationHistory.slice(0, 5).map((gen, idx) => (
+                          <div key={idx} style={{
+                            background: 'var(--color-bg-secondary)',
+                            padding: 'var(--space-2)',
+                            borderRadius: 'var(--radius-md)',
+                            fontSize: 'var(--text-xs)',
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                              <span style={{ fontWeight: 600 }}>{gen.model}</span>
+                              <Badge variant={gen.status === 'success' ? 'completed' : 'new'}>
+                                {gen.status}
+                              </Badge>
+                            </div>
+                            <div style={{ color: 'var(--color-text-secondary)' }}>
+                              Tokens: {formatTokenInfo(gen.tokens)} • Cost: {formatCost(gen.cost)}
+                            </div>
                           </div>
-                          <div style={{ color: 'var(--color-text-secondary)' }}>
-                            Tokens: {formatTokenInfo(gen.tokens)} • Cost: {formatCost(gen.cost)}
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRenderDocuments(generationId)}
-                            disabled={isRenderingDocs}
-                            loading={isRenderingDocs}
-                            style={{ marginTop: '8px', width: '100%' }}
-                          >
-                            {isRenderingDocs ? 'Rendering...' : 'Render Documents'}
-                          </Button>
-                        </div>
-                        )
-                      })}
-                    </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Generated Documents */}
-                {documents.length > 0 && (
-                  <div style={{ marginTop: 'var(--space-4)', paddingTop: 'var(--space-4)', borderTop: '1px solid var(--color-border)' }}>
-                    <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 600, marginBottom: 'var(--space-2)' }}>
-                      Generated Documents
-                    </h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-                      {documents.map(doc => (
-                        <div key={doc.id} style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          background: 'var(--color-bg-secondary)',
-                          padding: 'var(--space-2)',
-                          borderRadius: 'var(--radius-md)',
-                          fontSize: 'var(--text-xs)',
-                        }}>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: 600, marginBottom: '4px' }}>
-                              {doc.file_name}
-                            </div>
-                            <div style={{ color: 'var(--color-text-secondary)' }}>
-                              {doc.file_type.toUpperCase()} • v{doc.version}
-                            </div>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            icon={<Download size={14} />}
-                            onClick={() => downloadDocument(id, doc.id, doc.file_name)}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+
               </Card.Body>
             </Card>
             <Card>
