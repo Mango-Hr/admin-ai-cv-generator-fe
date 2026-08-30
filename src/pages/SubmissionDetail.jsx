@@ -476,7 +476,10 @@ export default function SubmissionDetail() {
                     {documents.length > 0 && (
                       <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-3)', borderBottom: '1px solid var(--color-border)', paddingBottom: 'var(--space-2)' }}>
                         <button
-                          onClick={() => setDocumentFilter('word')}
+                          onClick={() => {
+                            setDocumentFilter('word')
+                            setShowAllDocuments(false)
+                          }}
                           style={{
                             padding: 'var(--space-2) var(--space-3)',
                             border: documentFilter === 'word' ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
@@ -492,7 +495,10 @@ export default function SubmissionDetail() {
                           Word
                         </button>
                         <button
-                          onClick={() => setDocumentFilter('pdf')}
+                          onClick={() => {
+                            setDocumentFilter('pdf')
+                            setShowAllDocuments(false)
+                          }}
                           style={{
                             padding: 'var(--space-2) var(--space-3)',
                             border: documentFilter === 'pdf' ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
@@ -510,82 +516,78 @@ export default function SubmissionDetail() {
                       </div>
                     )}
 
-                    {/* Generated Documents */}
-                    {documents
-                      .filter(doc => {
-                        if (documentFilter === 'word') return doc.file_type.toLowerCase() === 'docx'
-                        if (documentFilter === 'pdf') return doc.file_type.toLowerCase() === 'pdf'
-                        return true
-                      })
-                      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-                      .slice(0, showAllDocuments ? undefined : 5)
-                      .map((doc) => (
-                      <div key={doc.id} className="file-item">
-                        <div className="file-item__icon">
-                          <FileText size={20} />
-                        </div>
-                        <div className="file-item__info">
-                          <div className="file-item__name">{doc.file_name}</div>
-                          <div className="file-item__meta">
-                            {doc.file_type.toUpperCase()} • v{doc.version} • {formatDistanceToNow(parseISO(doc.created_at), { addSuffix: true })}
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', gap: 'var(--space-1)' }}>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            icon={<Eye size={16} />}
-                            onClick={() => handleViewDocument(doc)}
-                            title="View document"
-                          />
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            icon={<Download size={16} />}
-                            onClick={() => downloadDocument(id, doc.id, doc.file_name)}
-                            title="Download"
-                          />
-                        </div>
-                      </div>
-                    ))}
-
-                    {documents.filter(doc => {
-                      if (documentFilter === 'word') return doc.file_type.toLowerCase() === 'docx'
-                      if (documentFilter === 'pdf') return doc.file_type.toLowerCase() === 'pdf'
-                      return true
-                    }).length > 5 && (
-                      <button
-                        onClick={() => setShowAllDocuments(!showAllDocuments)}
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          cursor: 'pointer',
-                          fontSize: 'var(--text-xs)',
-                          fontWeight: 600,
-                          color: 'var(--color-primary)',
-                          padding: 'var(--space-2)',
-                          textAlign: 'center',
-                          marginTop: 'var(--space-1)',
-                          width: '100%',
-                        }}
-                      >
-                        {showAllDocuments ? '↑ See Less' : `↓ See More (${documents.filter(doc => {
+                    {/* Filtered & Sorted Documents */}
+                    {(() => {
+                      const filteredDocs = documents
+                        .filter(doc => {
                           if (documentFilter === 'word') return doc.file_type.toLowerCase() === 'docx'
                           if (documentFilter === 'pdf') return doc.file_type.toLowerCase() === 'pdf'
                           return true
-                        }).length - 5} more)`}
-                      </button>
-                    )}
+                        })
+                        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                      
+                      const displayedDocs = showAllDocuments ? filteredDocs : filteredDocs.slice(0, 5)
+                      
+                      return (
+                        <>
+                          {displayedDocs.map((doc) => (
+                            <div key={doc.id} className="file-item">
+                              <div className="file-item__icon">
+                                <FileText size={20} />
+                              </div>
+                              <div className="file-item__info">
+                                <div className="file-item__name">{doc.file_name}</div>
+                                <div className="file-item__meta">
+                                  {doc.file_type.toUpperCase()} • v{doc.version} • {formatDistanceToNow(parseISO(doc.created_at), { addSuffix: true })}
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', gap: 'var(--space-1)' }}>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  icon={<Eye size={16} />}
+                                  onClick={() => handleViewDocument(doc)}
+                                  title="View document"
+                                />
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  icon={<Download size={16} />}
+                                  onClick={() => downloadDocument(id, doc.id, doc.file_name)}
+                                  title="Download"
+                                />
+                              </div>
+                            </div>
+                          ))}
 
-                    {documents.filter(doc => {
-                      if (documentFilter === 'word') return doc.file_type.toLowerCase() === 'docx'
-                      if (documentFilter === 'pdf') return doc.file_type.toLowerCase() === 'pdf'
-                      return true
-                    }).length === 0 && (
-                      <div style={{ textAlign: 'center', padding: 'var(--space-4)', color: 'var(--color-text-tertiary)' }}>
-                        No {documentFilter.toUpperCase()} documents available.
-                      </div>
-                    )}
+                          {filteredDocs.length > 5 && (
+                            <button
+                              onClick={() => setShowAllDocuments(!showAllDocuments)}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontSize: 'var(--text-xs)',
+                                fontWeight: 600,
+                                color: 'var(--color-primary)',
+                                padding: 'var(--space-2)',
+                                textAlign: 'center',
+                                marginTop: 'var(--space-1)',
+                                width: '100%',
+                              }}
+                            >
+                              {showAllDocuments ? '↑ See Less' : `↓ See More (${filteredDocs.length - 5} more)`}
+                            </button>
+                          )}
+
+                          {filteredDocs.length === 0 && (
+                            <div style={{ textAlign: 'center', padding: 'var(--space-4)', color: 'var(--color-text-tertiary)' }}>
+                              No {documentFilter.toUpperCase()} documents available.
+                            </div>
+                          )}
+                        </>
+                      )
+                    })()}
                   </div>
                 </Card.Body>
               </Card>
