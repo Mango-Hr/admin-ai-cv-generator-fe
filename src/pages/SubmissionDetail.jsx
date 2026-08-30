@@ -72,6 +72,7 @@ export default function SubmissionDetail() {
   const [selectedPrompt, setSelectedPrompt] = useState('auto')
   const [availablePrompts, setAvailablePrompts] = useState([])
   const [customInstructions, setCustomInstructions] = useState('')
+  const [includeChatHistory, setIncludeChatHistory] = useState(true)
   const [showGenerationHistory, setShowGenerationHistory] = useState(false)
 
   useEffect(() => {
