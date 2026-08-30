@@ -74,6 +74,7 @@ export default function SubmissionDetail() {
   const [customInstructions, setCustomInstructions] = useState('')
   const [includeChatHistory, setIncludeChatHistory] = useState(true)
   const [showGenerationHistory, setShowGenerationHistory] = useState(false)
+  const [showAllGenerations, setShowAllGenerations] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -691,13 +692,13 @@ export default function SubmissionDetail() {
                         }}
                       />
                       <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)', marginLeft: 'auto' }}>
-                        {generationHistory.length} generation{generationHistory.length !== 1 ? 's' : ''}
+                        {generationHistory.length} total
                       </span>
                     </button>
 
                     {showGenerationHistory && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', marginTop: 'var(--space-2)' }}>
-                        {generationHistory.slice(0, 5).map((gen, idx) => (
+                        {generationHistory.slice(0, showAllGenerations ? generationHistory.length : 5).map((gen, idx) => (
                           <div key={idx} style={{
                             background: 'var(--color-bg-secondary)',
                             padding: 'var(--space-2)',
@@ -715,6 +716,25 @@ export default function SubmissionDetail() {
                             </div>
                           </div>
                         ))}
+                        
+                        {generationHistory.length > 5 && (
+                          <button
+                            onClick={() => setShowAllGenerations(!showAllGenerations)}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              cursor: 'pointer',
+                              fontSize: 'var(--text-xs)',
+                              fontWeight: 600,
+                              color: 'var(--color-primary)',
+                              padding: 'var(--space-2)',
+                              textAlign: 'center',
+                              marginTop: 'var(--space-1)',
+                            }}
+                          >
+                            {showAllGenerations ? '↑ See Less' : `↓ See More (${generationHistory.length - 5} more)`}
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
