@@ -195,6 +195,42 @@ export const downloadDocument = async (submissionId, documentId, fileName) => {
 }
 
 /**
+ * Ask the AI application-assistant a follow-up question.
+ * Answers should be grounded in the tailored resume + the job description.
+ *
+ * NOTE: This expects a backend endpoint (POST .../submissions/:id/ask-ai) that
+ * is not implemented yet on the server. Until it exists, the call will fail
+ * gracefully and the UI shows a clear message.
+ * @param {string} submissionId
+ * @param {Object} params
+ * @returns {Promise<Object>}
+ */
+export const askAIQuestion = async (submissionId, params = {}) => {
+  try {
+    const token = localStorage.getItem('admin_token')
+    const response = await axios.post(
+      `${API_BASE_URL}/api/v1/admin/submissions/${submissionId}/ask-ai`,
+      {
+        question: params.question,
+        resume_text: params.resume_text || null,
+        job_description: params.job_description || null,
+        additional_instructions: params.additional_instructions || null,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    )
+    return response.data.data
+  } catch (error) {
+    console.error('[AIService] Failed to answer AI question:', error)
+    throw error
+  }
+}
+
+/**
  * Format token info for display
  * @param {Object} tokens
  * @returns {string}

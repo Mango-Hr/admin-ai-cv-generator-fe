@@ -4,23 +4,14 @@ import {
   ArrowLeft,
   Clock,
   Mail,
-  Phone,
   Briefcase,
-  Building2,
   FileText,
   UserPlus,
-  CheckCircle2,
-  Play,
   MessageSquare,
   Download,
   Trash2,
-  AlertCircle,
   Calendar,
-  Zap,
-  Loader,
-  History,
-  Eye,
-  ChevronDown,
+  Sparkles,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { format, formatDistanceToNow, parseISO } from 'date-fns'
@@ -28,92 +19,67 @@ import AdminLayout from '../components/layout/AdminLayout'
 import Card from '../components/shared/Card'
 import Badge from '../components/shared/Badge'
 import Button from '../components/shared/Button'
-import ProgressiveLoadingButton from '../components/shared/ProgressiveLoadingButton'
 import { default as Avatar } from '../components/shared/Avatar'
-import { Select } from '../components/shared/Input'
 import Skeleton from '../components/shared/Skeleton'
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '../components/shared/Modal/Modal'
 import { useToast } from '../contexts/ToastContext'
 import { useAuth } from '../contexts/AuthContext'
-import { fetchSubmissionById, updateSubmissionStatus, assignSubmission, unassignSubmission, deleteSubmission } from '../services/submissionsService'
+import { fetchSubmissionById, assignSubmission, unassignSubmission, deleteSubmission } from '../services/submissionsService'
 import { fetchStaffList } from '../services/staffService'
-import { getPrompts } from '../services/promptService'
-import { triggerAIGeneration, getGenerationHistory, renderDocuments, getSubmissionDocuments, downloadDocument, formatTokenInfo, formatCost } from '../services/aiService'
+import { getSubmissionDocuments, downloadDocument } from '../services/aiService'
+import { classifyDocument, buildDownloadName } from '../utils/documentNames'
 import './SubmissionDetail.css'
-
-const STATUS_OPTIONS = [
-  { value: 'new', label: 'New', color: 'new' },
-  { value: 'in_progress', label: 'In Progress', color: 'progress' },
-  { value: 'review', label: 'Review', color: 'review' },
-  { value: 'completed', label: 'Completed', color: 'completed' },
-]
 
 export default function SubmissionDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { toast } = useToast()
   const { user } = useAuth()
-  
+
   const [loading, setLoading] = useState(true)
   const [submission, setSubmission] = useState(null)
   const [staff, setStaff] = useState([])
   const [selectedStaff, setSelectedStaff] = useState('')
-  const [selectedStatus, setSelectedStatus] = useState('')
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [assigningStaffId, setAssigningStaffId] = useState(null)
-  const [glowingStatus, setGlowingStatus] = useState(null)
   const [showAllActivities, setShowAllActivities] = useState(false)
-  const [generationHistory, setGenerationHistory] = useState([])
   const [documents, setDocuments] = useState([])
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [isRenderingDocs, setIsRenderingDocs] = useState(false)
-  const [aiModel, setAiModel] = useState('gpt-4o')
-  const [selectedPrompt, setSelectedPrompt] = useState('auto')
-  const [availablePrompts, setAvailablePrompts] = useState([])
-  const [customInstructions, setCustomInstructions] = useState('')
-  const [includeChatHistory, setIncludeChatHistory] = useState(true)
-  const [showGenerationHistory, setShowGenerationHistory] = useState(false)
-  const [showAllGenerations, setShowAllGenerations] = useState(false)
   const [documentFilter, setDocumentFilter] = useState('word')
   const [showAllDocuments, setShowAllDocuments] = useState(false)
-
-  useEffect(() => {
-    loadData()
-  }, [id])
 
   const loadData = async () => {
     setLoading(true)
     try {
-      const [submissionData, staffData, historyData, docsData, promptsData] = await Promise.all([
+      const [submissionData, staffData, docsData] = await Promise.all([
         fetchSubmissionById(id),
         fetchStaffList(),
-        getGenerationHistory(id),
         getSubmissionDocuments(id),
-        getPrompts(),
       ])
-      
+
       if (!submissionData) {
-        toast.error('Submission not found')
+        toast.error('Client not found')
         navigate('/admin/submissions')
         return
       }
 
       setSubmission(submissionData)
       setStaff(staffData.staff || [])
-      setSelectedStatus(submissionData.status)
       setSelectedStaff(submissionData.assigned_to?.id || '')
-      setGenerationHistory(historyData)
-      setDocuments(docsData)
-      setAvailablePrompts(promptsData || [])
+      setDocuments(Array.isArray(docsData) ? docsData : [])
     } catch (error) {
-      toast.error('Failed to load submission details')
+      toast.error('Failed to load client details')
       console.error(error)
       navigate('/admin/submissions')
     } finally {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
 
   const handleAssign = async () => {
     if (!selectedStaff) {
@@ -126,12 +92,12 @@ export default function SubmissionDetail() {
     try {
       const updatedSubmission = await assignSubmission(id, selectedStaff)
       const staffMember = staff.find(s => s.id === selectedStaff)
-      
+
       // Update local state instead of reloading
       setSubmission(updatedSubmission)
       toast.success(`Assigned to ${staffMember.first_name} ${staffMember.last_name}`)
     } catch (error) {
-      toast.error('Failed to assign submission')
+      toast.error('Failed to assign client')
       console.error(error)
     } finally {
       setAssigningStaffId(null)
@@ -143,89 +109,27 @@ export default function SubmissionDetail() {
 
     try {
       const updatedSubmission = await unassignSubmission(id)
-      
+
       // Update local state instead of reloading
       setSubmission(updatedSubmission)
       setSelectedStaff('')
-      toast.success('Submission unassigned successfully')
+      toast.success('Client unassigned successfully')
     } catch (error) {
-      toast.error('Failed to unassign submission')
+      toast.error('Failed to unassign client')
       console.error(error)
     } finally {
       setAssigningStaffId(null)
     }
   }
 
-  const handleStatusChange = async (newStatus) => {
-    try {
-      const updatedSubmission = await updateSubmissionStatus(id, newStatus)
-      
-      // Update local state instead of reloading
-      setSubmission(updatedSubmission)
-      setSelectedStatus(newStatus)
-      
-      // Add glow effect to the button for 2 seconds
-      setGlowingStatus(newStatus)
-      setTimeout(() => setGlowingStatus(null), 2000)
-      
-      toast.success('Status updated successfully')
-    } catch (error) {
-      toast.error('Failed to update status')
-      console.error(error)
-    }
-  }
-
-  const handleGenerateCV = async () => {
-    setIsGenerating(true)
-    try {
-      // Step 1: Trigger AI Generation
-      const generation = await triggerAIGeneration(id, {
-        provider: 'openai',
-        model: aiModel,
-        prompt_id: selectedPrompt === 'auto' ? null : selectedPrompt,
-        custom_instructions: customInstructions || null,
-        include_chat_history: includeChatHistory,
+  const handleDownloadDoc = (doc) => {
+    const firstName = submission?.client?.first_name || 'Client'
+    downloadDocument(id, doc.id, buildDownloadName(doc, classifyDocument(doc), firstName))
+      .then(() => toast.success('Download started'))
+      .catch(error => {
+        console.error('Download failed:', error)
+        toast.error('Failed to download the document')
       })
-      
-      // Add to history
-      setGenerationHistory(prev => [generation, ...prev])
-      
-      // Step 2: Auto-render documents
-      const generationId = generation.ai_generation_id || generation.id
-      const rendered = await renderDocuments(id, generationId, ['pdf', 'docx'])
-      setDocuments(prev => [...prev, ...rendered])
-      
-      // Show 100% for 1 second before stopping the animation
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Success message directs user to documents
-      toast.success('CV generated successfully. Scroll down to see it in Documents.')
-    } catch (error) {
-      // Keep all detailed logging in console
-      console.error('Full error object:', error)
-      console.error('Error response:', error.response?.data)
-      
-      // Simple UI error message
-      toast.error('Failed to generate CV. Check console for details.')
-    } finally {
-      setIsGenerating(false)
-    }
-  }
-
-  const handleViewDocument = async (doc) => {
-    // Change status to "in_progress" if it's "new"
-    if (submission.status === 'new') {
-      try {
-        await updateSubmissionStatus(id, 'in_progress')
-        setSubmission(prev => ({ ...prev, status: 'in_progress' }))
-        setSelectedStatus('in_progress')
-      } catch (error) {
-        console.error('Failed to update status:', error)
-      }
-    }
-    
-    // Open document in new tab for preview
-    window.open(doc.document_url || doc.file_url, '_blank')
   }
 
   const handleDelete = () => {
@@ -236,10 +140,10 @@ export default function SubmissionDetail() {
     setDeleting(true)
     try {
       await deleteSubmission(id)
-      toast.success('Submission deleted successfully')
+      toast.success('Client deleted successfully')
       navigate('/admin/submissions')
     } catch (error) {
-      toast.error('Failed to delete submission')
+      toast.error('Failed to delete client')
       console.error(error)
     } finally {
       setDeleting(false)
@@ -264,25 +168,29 @@ export default function SubmissionDetail() {
     return null
   }
 
+  const firstName = submission.client.first_name
+  const lastName = submission.client.last_name
+  const fullName = `${firstName} ${lastName}`
+  const clientDOB = submission.client.date_of_birth || submission.client.dob
+
   return (
     <AdminLayout>
       <div className="submission-detail">
         {/* Back Link */}
         <Link to="/admin/submissions" className="submission-detail__back">
           <ArrowLeft size={16} />
-          Back to Submissions
+          Back to Clients
         </Link>
 
-        {/* Header */}
+        {/* Header — the "Tailor Resume" action comes first */}
         <div className="submission-detail__header">
           <div className="submission-detail__title-section">
             <div className="submission-detail__id">{submission.reference_id}</div>
-            <h1 className="submission-detail__title">{submission.client.first_name} {submission.client.last_name}</h1>
+            <h1 className="submission-detail__title">{fullName}</h1>
             <div className="submission-detail__meta">
-              <Badge variant={submission.status}>{submission.status}</Badge>
               <span>
                 <Clock size={14} style={{ display: 'inline', marginRight: '4px' }} />
-                {formatDistanceToNow(parseISO(submission.created_at), { addSuffix: true })}
+                Client since {formatDistanceToNow(parseISO(submission.created_at), { addSuffix: true })}
               </span>
               {submission.priority && (
                 <Badge variant={submission.priority}>{submission.priority} priority</Badge>
@@ -290,9 +198,18 @@ export default function SubmissionDetail() {
             </div>
           </div>
           <div className="submission-detail__actions">
-            <Link to={`/admin/chat/${submission.reference_id}`} style={{ textDecoration: 'none' }}>
+            <Link to={`/admin/submissions/${submission.id}/tailor`} style={{ textDecoration: 'none' }}>
               <Button
                 variant="primary"
+                size="lg"
+                icon={<Sparkles />}
+              >
+                Tailor Resume
+              </Button>
+            </Link>
+            <Link to={`/admin/chat/${submission.reference_id}`} style={{ textDecoration: 'none' }}>
+              <Button
+                variant="secondary"
                 icon={<MessageSquare />}
               >
                 Open Chat
@@ -319,11 +236,15 @@ export default function SubmissionDetail() {
         >
           {/* Main Content */}
           <div className="submission-detail__main">
-            {/* Contact Information */}
+            {/* Client Profile (submitted profile info) */}
             <Card>
-              <Card.Header title="Contact Information" icon={<Mail />} />
+              <Card.Header title="Client Profile" icon={<Mail />} />
               <Card.Body>
                 <div className="info-grid">
+                  <div className="info-item">
+                    <div className="info-item__label">Full Name</div>
+                    <div className="info-item__value">{fullName}</div>
+                  </div>
                   <div className="info-item">
                     <div className="info-item__label">Email Address</div>
                     <a
@@ -343,8 +264,14 @@ export default function SubmissionDetail() {
                         {submission.client.phone}
                       </a>
                     ) : (
-                      <div className="info-item__value" style={{ color: 'var(--color-text-tertiary)' }}>Not provided</div>
+                      <div className="info-item__value info-item__value--muted">Not provided</div>
                     )}
+                  </div>
+                  <div className="info-item">
+                    <div className="info-item__label">Date of Birth</div>
+                    <div className="info-item__value">
+                      {clientDOB ? format(parseISO(clientDOB), 'PPP') : <span className="info-item__value--muted">Not provided</span>}
+                    </div>
                   </div>
                   <div className="info-item">
                     <div className="info-item__label">Target Role</div>
@@ -353,18 +280,6 @@ export default function SubmissionDetail() {
                   <div className="info-item">
                     <div className="info-item__label">Target Company</div>
                     <div className="info-item__value">{submission.target_company || 'Not specified'}</div>
-                  </div>
-                  <div className="info-item">
-                    <div className="info-item__label">Submission Date</div>
-                    <div className="info-item__value">
-                      {format(parseISO(submission.created_at), 'PPP p')}
-                    </div>
-                  </div>
-                  <div className="info-item">
-                    <div className="info-item__label">Has Existing CV</div>
-                    <div className="info-item__value">
-                      {submission.existing_cv_url ? 'Yes' : 'No'}
-                    </div>
                   </div>
                 </div>
               </Card.Body>
@@ -381,23 +296,26 @@ export default function SubmissionDetail() {
                         .filter(activity => {
                           // Everyone can see "Submission Created" event
                           if (activity.activity_type === 'created') return true
-                          
+
                           // Super admin sees all activities
                           if (user?.role === 'super_admin') return true
-                          
+
                           // Sub admin only sees their own activities (plus the creation event)
                           if (user?.role === 'sub_admin') {
                             return activity.actor_id === user.id
                           }
-                          
+
                           return false
                         })
                         .slice(0, showAllActivities ? submission.activities.length : 4)
-                        .map((activity, index) => (
-                          <div key={activity.id} className={`timeline__item timeline__item--${activity.activity_type === 'status_changed' ? 'progress' : activity.activity_type === 'assigned' ? 'assigned' : 'created'}`}>
+                        .map((activity) => (
+                          <div
+                            key={activity.id}
+                            className={`timeline__item timeline__item--${activity.activity_type === 'status_changed' ? 'progress' : activity.activity_type === 'assigned' ? 'assigned' : 'created'}`}
+                          >
                             <div className="timeline__icon">
                               {activity.activity_type === 'status_changed' ? (
-                                <Play size={20} />
+                                <FileText size={20} />
                               ) : activity.activity_type === 'assigned' ? (
                                 <UserPlus size={20} />
                               ) : (
@@ -415,7 +333,7 @@ export default function SubmissionDetail() {
                             </div>
                           </div>
                         ))}
-                      
+
                       {submission.activities.filter(activity => {
                         if (activity.activity_type === 'created') return true
                         if (user?.role === 'super_admin') return true
@@ -423,7 +341,7 @@ export default function SubmissionDetail() {
                         return false
                       }).length > 4 && (
                         <div className="timeline__toggle">
-                          <button 
+                          <button
                             className="timeline__toggle-btn"
                             onClick={() => setShowAllActivities(!showAllActivities)}
                           >
@@ -453,7 +371,7 @@ export default function SubmissionDetail() {
               </Card>
             )}
 
-            {/* Files */}
+            {/* Documents (CVs submitted for this client) */}
             {(submission.existing_cv_url || documents.length > 0) && (
               <Card>
                 <Card.Header title="Documents" icon={<FileText />} />
@@ -523,14 +441,14 @@ export default function SubmissionDetail() {
                     {(() => {
                       const filteredDocs = documents
                         .filter(doc => {
-                          if (documentFilter === 'word') return doc.file_type.toLowerCase() === 'docx'
-                          if (documentFilter === 'pdf') return doc.file_type.toLowerCase() === 'pdf'
+                          if (documentFilter === 'word') return (doc.file_type || '').toLowerCase() === 'docx'
+                          if (documentFilter === 'pdf') return (doc.file_type || '').toLowerCase() === 'pdf'
                           return true
                         })
                         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-                      
+
                       const displayedDocs = showAllDocuments ? filteredDocs : filteredDocs.slice(0, 5)
-                      
+
                       return (
                         <>
                           {displayedDocs.map((doc) => (
@@ -541,15 +459,15 @@ export default function SubmissionDetail() {
                               <div className="file-item__info">
                                 <div className="file-item__name">{doc.file_name}</div>
                                 <div className="file-item__meta">
-                                  {doc.file_type.toUpperCase()} • v{doc.version} • {formatDistanceToNow(parseISO(doc.created_at), { addSuffix: true })}
+                                  {(doc.file_type || '').toUpperCase()} • v{doc.version} • {formatDistanceToNow(parseISO(doc.created_at), { addSuffix: true })}
                                 </div>
                               </div>
                               <div style={{ display: 'flex', gap: 'var(--space-1)' }}>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
                                   icon={<Download size={16} />}
-                                  onClick={() => downloadDocument(id, doc.id, doc.file_name)}
+                                  onClick={() => handleDownloadDoc(doc)}
                                   title="Download"
                                 />
                               </div>
@@ -592,7 +510,7 @@ export default function SubmissionDetail() {
 
           {/* Sidebar */}
           <div className="submission-detail__sidebar">
-            {/* Assign Staff - Only visible to super_admin */}
+            {/* Assign Staff - Only visible to main admin */}
             {user?.role === 'super_admin' && (
               <Card>
                 <Card.Header title="Assignment" icon={<UserPlus />} />
@@ -628,9 +546,9 @@ export default function SubmissionDetail() {
                         </select>
                       </div>
                       <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-                        <Button 
-                          variant="primary" 
-                          size="sm" 
+                        <Button
+                          variant="primary"
+                          size="sm"
                           onClick={handleAssign}
                           disabled={!selectedStaff || assigningStaffId}
                           loading={assigningStaffId === selectedStaff}
@@ -639,9 +557,9 @@ export default function SubmissionDetail() {
                           Assign
                         </Button>
                         {submission.assigned_to && (
-                          <Button 
-                            variant="secondary" 
-                            size="sm" 
+                          <Button
+                            variant="secondary"
+                            size="sm"
                             onClick={handleUnassign}
                             disabled={assigningStaffId}
                             loading={assigningStaffId === 'unassign'}
@@ -656,203 +574,18 @@ export default function SubmissionDetail() {
               </Card>
             )}
 
-            {/* AI Generation */}
-            <Card>
-              <Card.Header title="AI Generation" icon={<Zap />} />
-              <Card.Body>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 'var(--text-sm)', fontWeight: 600, marginBottom: 'var(--space-2)' }}>
-                      AI Model
-                    </label>
-                    <Select
-                      value={aiModel}
-                      onChange={(e) => setAiModel(e.target.value)}
-                    >
-                      <option value="gpt-4o">GPT-4o</option>
-                      <option value="gpt-4o-mini">GPT-4o Mini</option>
-                      <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: 'var(--text-sm)', fontWeight: 600, marginBottom: 'var(--space-2)' }}>
-                      System Prompt
-                    </label>
-                    <Select
-                      value={selectedPrompt}
-                      onChange={(e) => setSelectedPrompt(e.target.value)}
-                    >
-                      <option value="auto">Auto-select (Recommended)</option>
-                      {availablePrompts.filter(p => p.is_active).map(prompt => (
-                        <option key={prompt.id} value={prompt.id}>
-                          {prompt.name} ({prompt.category.replace('_', ' ').toUpperCase()})
-                        </option>
-                      ))}
-                    </Select>
-                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)', marginTop: '4px' }}>
-                      {selectedPrompt === 'auto' 
-                        ? 'The system will automatically select the best prompt for the target role'
-                        : availablePrompts.find(p => p.id === selectedPrompt)?.description
-                      }
-                    </div>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: 'var(--text-sm)', fontWeight: 600, marginBottom: 'var(--space-2)' }}>
-                      Custom Instructions
-                    </label>
-                    <textarea
-                      value={customInstructions}
-                      onChange={(e) => setCustomInstructions(e.target.value)}
-                      placeholder="Add custom instructions for the AI..."
-                      style={{
-                        width: '100%',
-                        minHeight: '80px',
-                        padding: 'var(--space-2)',
-                        border: '1px solid var(--color-border)',
-                        borderRadius: 'var(--radius-md)',
-                        fontFamily: 'inherit',
-                        fontSize: 'var(--text-sm)',
-                      }}
-                    />
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                    <input
-                      type="checkbox"
-                      id="includeChatHistory"
-                      checked={includeChatHistory}
-                      onChange={(e) => setIncludeChatHistory(e.target.checked)}
-                      style={{ cursor: 'pointer' }}
-                    />
-                    <label htmlFor="includeChatHistory" style={{ fontSize: 'var(--text-sm)', cursor: 'pointer' }}>
-                      Include chat history in generation
-                    </label>
-                  </div>
-
-                  <ProgressiveLoadingButton
-                    isLoading={isGenerating}
-                    onClick={handleGenerateCV}
-                    icon={Zap}
-                    style={{ width: '100%' }}
-                  >
-                    Generate CV
-                  </ProgressiveLoadingButton>
-                </div>
-
-                {/* Generation History - Collapsed by Default */}
-                {generationHistory.length > 0 && (
-                  <div style={{ marginTop: 'var(--space-4)', paddingTop: 'var(--space-4)', borderTop: '1px solid var(--color-border)' }}>
-                    <button
-                      onClick={() => setShowGenerationHistory(!showGenerationHistory)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 'var(--space-2)',
-                        background: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontSize: 'var(--text-sm)',
-                        fontWeight: 600,
-                        color: 'var(--color-text-primary)',
-                        padding: 0,
-                        marginBottom: showGenerationHistory ? 'var(--space-2)' : 0,
-                      }}
-                    >
-                      <History size={16} />
-                      <span>Generation History Usage</span>
-                      <ChevronDown 
-                        size={16}
-                        style={{
-                          transform: showGenerationHistory ? 'rotate(180deg)' : 'rotate(0deg)',
-                          transition: 'transform var(--transition-fast)',
-                        }}
-                      />
-                      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-tertiary)', marginLeft: 'auto' }}>
-                        {generationHistory.length} total
-                      </span>
-                    </button>
-
-                    {showGenerationHistory && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', marginTop: 'var(--space-2)' }}>
-                        {generationHistory.slice(0, showAllGenerations ? generationHistory.length : 5).map((gen, idx) => (
-                          <div key={idx} style={{
-                            background: 'var(--color-bg-secondary)',
-                            padding: 'var(--space-2)',
-                            borderRadius: 'var(--radius-md)',
-                            fontSize: 'var(--text-xs)',
-                          }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                              <span style={{ fontWeight: 600 }}>{gen.model}</span>
-                              <Badge variant={gen.status === 'success' ? 'completed' : 'new'}>
-                                {gen.status}
-                              </Badge>
-                            </div>
-                            <div style={{ color: 'var(--color-text-secondary)' }}>
-                              Tokens: {formatTokenInfo(gen.tokens)} • Cost: {formatCost(gen.cost)}
-                            </div>
-                          </div>
-                        ))}
-                        
-                        {generationHistory.length > 5 && (
-                          <button
-                            onClick={() => setShowAllGenerations(!showAllGenerations)}
-                            style={{
-                              background: 'transparent',
-                              border: 'none',
-                              cursor: 'pointer',
-                              fontSize: 'var(--text-xs)',
-                              fontWeight: 600,
-                              color: 'var(--color-primary)',
-                              padding: 'var(--space-2)',
-                              textAlign: 'center',
-                              marginTop: 'var(--space-1)',
-                            }}
-                          >
-                            {showAllGenerations ? '↑ See Less' : `↓ See More (${generationHistory.length - 5} more)`}
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-
-              </Card.Body>
-            </Card>
-            <Card>
-              <Card.Header title="Status" icon={<CheckCircle2 />} />
-              <Card.Body>
-                <div className="status-section">
-                  <div className="status-current">
-                    <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
-                      Current Status
-                    </span>
-                    <Badge variant={submission.status}>{submission.status}</Badge>
-                  </div>
-                  <div className="status-buttons">
-                    {STATUS_OPTIONS.map((option) => (
-                      <button
-                        key={option.value}
-                        className={`status-button status-button--${option.color} ${
-                          selectedStatus === option.value ? 'status-button--active' : ''
-                        } ${glowingStatus === option.value ? 'status-button--glow' : ''}`}
-                        onClick={() => handleStatusChange(option.value)}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </Card.Body>
-            </Card>
-
             {/* Quick Actions */}
             <Card>
               <Card.Header title="Quick Actions" icon={<Briefcase />} />
               <Card.Body>
                 <div className="quick-actions-list">
+                  <Link
+                    to={`/admin/submissions/${submission.id}/tailor`}
+                    className="quick-action-btn quick-action-btn--orange"
+                  >
+                    <Sparkles className="quick-action-btn__icon" />
+                    Tailor Resume
+                  </Link>
                   <Link
                     to={`/admin/chat/${submission.reference_id}`}
                     className="quick-action-btn quick-action-btn--blue"
@@ -860,26 +593,12 @@ export default function SubmissionDetail() {
                     <MessageSquare className="quick-action-btn__icon" />
                     Chat with Client
                   </Link>
-                  <Link
-                    to={`/admin/generate/${submission.id}`}
-                    className="quick-action-btn quick-action-btn--orange"
-                  >
-                    <FileText className="quick-action-btn__icon" />
-                    Generate CV
-                  </Link>
-                  <Link
-                    to={`/download/${submission.id}`}
-                    className="quick-action-btn quick-action-btn--purple"
-                  >
-                    <Download className="quick-action-btn__icon" />
-                    Download CV
-                  </Link>
                   <button
                     className="quick-action-btn quick-action-btn--red"
                     onClick={handleDelete}
                   >
                     <Trash2 className="quick-action-btn__icon" />
-                    Delete Submission
+                    Delete Client
                   </button>
                 </div>
               </Card.Body>
@@ -894,10 +613,10 @@ export default function SubmissionDetail() {
         onClose={() => setDeleteModalOpen(false)}
         size="sm"
       >
-        <ModalHeader title="Delete Submission" onClose={() => setDeleteModalOpen(false)} />
+        <ModalHeader title="Delete Client" onClose={() => setDeleteModalOpen(false)} />
         <ModalBody>
           <p style={{ marginBottom: 'var(--space-4)', color: 'var(--color-text-secondary)' }}>
-            Are you sure you want to delete this submission from <strong>{submission?.client?.first_name} {submission?.client?.last_name}</strong>? This action cannot be undone.
+            Are you sure you want to delete this client and all their records? This action cannot be undone.
           </p>
         </ModalBody>
         <ModalFooter>

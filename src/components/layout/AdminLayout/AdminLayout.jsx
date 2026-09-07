@@ -20,7 +20,6 @@ import Skeleton from '../../shared/Skeleton'
 import { useAuth } from '../../../contexts/AuthContext'
 import { useToast } from '../../../contexts/ToastContext'
 import { getAdminProfile } from '../../../services/authService'
-import { getNewSubmissionsCount } from '../../../services/submissionsService'
 import { getTaskMetrics } from '../../../services/tasksService'
 import logoImg from '../../../assets/textbg.png'
 import './AdminLayout.css'
@@ -30,8 +29,8 @@ const NAV_ITEMS = [
     section: 'Main',
     items: [
       { path: '/admin', icon: <LayoutDashboard />, label: 'Dashboard', roles: ['super_admin', 'sub_admin'] },
-      { path: '/admin/submissions', icon: <FileStack />, label: 'Submissions', badge: null, roles: ['super_admin', 'sub_admin'] },
-      { path: '/admin/tasks', icon: <CheckSquare />, label: 'My Tasks', badge: null, roles: ['super_admin', 'sub_admin'] },
+      { path: '/admin/submissions', icon: <FileStack />, label: 'Clients', roles: ['super_admin', 'sub_admin'] },
+      { path: '/admin/tasks', icon: <CheckSquare />, label: 'My Tasks', roles: ['super_admin', 'sub_admin'] },
     ],
   },
   {
@@ -53,7 +52,6 @@ export default function AdminLayout({ children }) {
   const [isLoading, setIsLoading] = useState(true)
   const [profile, setProfile] = useState(null)
   const [profileLoading, setProfileLoading] = useState(true)
-  const [submissionCount, setSubmissionCount] = useState(0)
   const [taskCount, setTaskCount] = useState(0)
   
   // Fetch user profile for avatar
@@ -71,18 +69,6 @@ export default function AdminLayout({ children }) {
     
     if (user) {
       fetchProfile()
-    }
-  }, [user])
-
-  // Fetch submission count
-  useEffect(() => {
-    const fetchSubmissionCount = async () => {
-      const count = await getNewSubmissionsCount()
-      setSubmissionCount(count)
-    }
-
-    if (user) {
-      fetchSubmissionCount()
     }
   }, [user])
 
@@ -195,11 +181,6 @@ export default function AdminLayout({ children }) {
                     {item.label === 'My Tasks' && taskCount > 0 && (
                       <Badge size="sm" variant="new" className="admin-layout__nav-badge">
                         {taskCount}
-                      </Badge>
-                    )}
-                    {item.label === 'Submissions' && submissionCount > 0 && (
-                      <Badge size="sm" variant="new" className="admin-layout__nav-badge">
-                        {submissionCount}
                       </Badge>
                     )}
                   </Link>

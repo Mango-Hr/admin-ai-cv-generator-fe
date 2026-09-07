@@ -68,7 +68,7 @@ export default function AdminChat() {
         <div className="admin-chat__header">
           <Link to={`/admin/submissions/${submission.id}`} className="admin-chat__back">
             <ArrowLeft size={16} />
-            Back to Submission
+            Back to Client
           </Link>
           <h1 className="admin-chat__title">
             Chat with {submission.client.first_name} {submission.client.last_name}

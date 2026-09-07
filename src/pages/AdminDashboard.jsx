@@ -1,25 +1,21 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import {
   FileStack,
-  Clock,
-  CheckCircle2,
   MessageSquare,
-  TrendingUp,
-  TrendingDown,
   ArrowRight,
+  CheckSquare,
   Users,
   FileCode,
   BarChart3,
   Eye,
+  Sparkles,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { formatDistanceToNow, parseISO } from 'date-fns'
 import AdminLayout from '../components/layout/AdminLayout'
 import Card from '../components/shared/Card'
-import Badge from '../components/shared/Badge'
 import Button from '../components/shared/Button'
-import { default as Avatar } from '../components/shared/Avatar'
 import Skeleton from '../components/shared/Skeleton'
 import EmptyState from '../components/shared/EmptyState'
 import { useAuth } from '../contexts/AuthContext'
@@ -27,71 +23,40 @@ import { useToast } from '../contexts/ToastContext'
 import { fetchDashboardStats, fetchRecentSubmissions, getTotalSubmissionsCount, getMyTasksCount } from '../services/dashboardService'
 import './AdminDashboard.css'
 
-const STAT_CARDS = [
-  {
-    key: 'new_requests',
-    icon: <FileStack />,
-    label: 'New Requests',
-    color: 'new',
-    footer: 'Awaiting processing',
-  },
-  {
-    key: 'in_progress',
-    icon: <Clock />,
-    label: 'In Progress',
-    color: 'progress',
-    footer: 'Currently being worked on',
-  },
-  {
-    key: 'completed',
-    icon: <CheckCircle2 />,
-    label: 'Completed',
-    color: 'completed',
-    footer: 'Successfully finished',
-  },
-  {
-    key: 'active_chats',
-    icon: <MessageSquare />,
-    label: 'Active Conversations',
-    color: 'chats',
-    footer: 'Ongoing client chats',
-  },
-]
-
 const QUICK_ACTIONS = [
   {
-    title: 'View All Submissions',
-    description: 'Manage and track all CV requests',
+    title: 'View All Clients',
+    description: 'Open a client and tailor their resume',
     icon: <FileStack />,
     link: '/admin/submissions',
     color: 'blue',
-    badgeKey: 'totalSubmissions',
+    badgeKey: 'clients',
     roles: ['super_admin', 'sub_admin'],
   },
   {
     title: 'My Tasks',
     description: 'Review assigned tasks and deadlines',
-    icon: <CheckCircle2 />,
+    icon: <CheckSquare />,
     link: '/admin/tasks',
     color: 'orange',
-    badgeKey: 'myTasks',
+    badgeKey: 'tasks',
     roles: ['super_admin', 'sub_admin'],
   },
   {
     title: 'Manage Staff',
-    description: 'View team members and assignments',
+    description: 'View the team and client loads',
     icon: <Users />,
     link: '/admin/staff',
     color: 'purple',
-    roles: ['super_admin'], // Only super_admin can manage staff
+    roles: ['super_admin'],
   },
   {
     title: 'AI Prompts',
-    description: 'Configure CV generation templates',
+    description: 'Review and edit prompt templates',
     icon: <FileCode />,
     link: '/admin/prompts',
     color: 'teal',
-    roles: ['super_admin'], // Only super_admin can manage prompts
+    roles: ['super_admin'],
   },
 ]
 
@@ -101,8 +66,11 @@ export default function AdminDashboard({ userRole }) {
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState(null)
   const [recentSubmissions, setRecentSubmissions] = useState([])
-  const [totalSubmissions, setTotalSubmissions] = useState(0)
+  const [totalClients, setTotalClients] = useState(0)
   const [myTasks, setMyTasks] = useState(0)
+
+  const isSubAdmin = user?.role === 'sub_admin'
+  const role = userRole || user?.role
 
   useEffect(() => {
     const loadData = async () => {
@@ -116,7 +84,7 @@ export default function AdminDashboard({ userRole }) {
         ])
         setStats(statsData)
         setRecentSubmissions(submissionsData.submissions || [])
-        setTotalSubmissions(totalCount)
+        setTotalClients(totalCount)
         setMyTasks(tasksCount)
       } catch (error) {
         console.error('Failed to load dashboard data:', error)
@@ -136,6 +104,29 @@ export default function AdminDashboard({ userRole }) {
     return 'Good evening'
   }
 
+  const adminName = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.name || ''
+
+  // Stat cards — client-focused, no pipeline stages
+  const statCards = []
+  if (stats && typeof stats.active_chats === 'number') {
+    statCards.push({
+      key: 'active_chats',
+      icon: <MessageSquare />,
+      label: 'Active Conversations',
+      value: stats.active_chats,
+      footer: 'Ongoing client chats',
+      color: 'chats',
+    })
+  }
+  statCards.unshift({
+    key: 'clients',
+    icon: <FileStack />,
+    label: isSubAdmin ? 'My Clients' : 'Total Clients',
+    value: totalClients,
+    footer: isSubAdmin ? 'Assigned to you' : 'Across the team',
+    color: 'blue',
+  })
+
   return (
     <AdminLayout>
       <div className="admin-dashboard">
@@ -145,7 +136,7 @@ export default function AdminDashboard({ userRole }) {
             <div>
               <h1 className="admin-dashboard__title">Dashboard</h1>
               <p className="admin-dashboard__greeting">
-                {getGreeting()}!, {user?.name}Here's what's happening today.
+                {getGreeting()}{adminName ? `, ${adminName}` : ''} — here's what's happening today.
               </p>
             </div>
           </div>
@@ -155,12 +146,12 @@ export default function AdminDashboard({ userRole }) {
         <div className="admin-dashboard__stats">
           {loading ? (
             <>
-              {[...Array(4)].map((_, i) => (
+              {[...Array(2)].map((_, i) => (
                 <Skeleton key={i} variant="card" height={160} />
               ))}
             </>
-          ) : stats ? (
-            STAT_CARDS.map((card, index) => (
+          ) : statCards.length > 0 ? (
+            statCards.map((card, index) => (
               <motion.div
                 key={card.key}
                 initial={{ opacity: 0, y: 20 }}
@@ -172,7 +163,7 @@ export default function AdminDashboard({ userRole }) {
                     <div className="stat-card__icon">{card.icon}</div>
                   </div>
                   <div className="stat-card__body">
-                    <div className="stat-card__value">{stats[card.key] || 0}</div>
+                    <div className="stat-card__value">{card.value || 0}</div>
                     <div className="stat-card__label">{card.label}</div>
                   </div>
                   <div className="stat-card__footer">{card.footer}</div>
@@ -184,11 +175,11 @@ export default function AdminDashboard({ userRole }) {
 
         {/* Main Content Grid */}
         <div className="admin-dashboard__content">
-          {/* Recent Submissions */}
+          {/* Recent Clients */}
           <div className="admin-dashboard__submissions">
             <Card>
               <Card.Header
-                title="Recent Submissions"
+                title="Recent Clients"
                 icon={<FileStack />}
                 action={
                   <Link to="/admin/submissions" style={{ textDecoration: 'none' }}>
@@ -209,8 +200,10 @@ export default function AdminDashboard({ userRole }) {
                 ) : recentSubmissions.length === 0 ? (
                   <EmptyState
                     icon={<FileStack />}
-                    title="No submissions yet"
-                    description="New CV requests will appear here"
+                    title={isSubAdmin ? 'No clients assigned to you yet' : 'No clients yet'}
+                    description={isSubAdmin
+                      ? 'Clients assigned to you by the main admin will appear here'
+                      : 'New client requests will appear here'}
                   />
                 ) : (
                   <>
@@ -228,25 +221,24 @@ export default function AdminDashboard({ userRole }) {
                             {submission.target_position}
                           </div>
 
-                          <Badge variant={submission.status}>{submission.status}</Badge>
+                          <div className="submissions-table__role">
+                            {submission.target_company || '—'}
+                          </div>
 
-                          <div className="submissions-table__assigned">
-                            {submission.assigned_to ? (
-                              <>
-                                <Avatar
-                                  fallback={`${submission.assigned_to.first_name} ${submission.assigned_to.last_name}`}
-                                  size="xs"
-                                />
-                                <span>{submission.assigned_to.first_name}</span>
-                              </>
-                            ) : (
-                              <span style={{ color: 'var(--color-text-tertiary)' }}>
-                                Unassigned
-                              </span>
-                            )}
+                          <div className="submissions-table__time">
+                            {formatDistanceToNow(parseISO(submission.created_at), { addSuffix: true })}
                           </div>
 
                           <div className="submissions-table__actions">
+                            <Link to={`/admin/submissions/${submission.id}/tailor`} style={{ textDecoration: 'none' }}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                icon={<Sparkles />}
+                              >
+                                Tailor
+                              </Button>
+                            </Link>
                             <Link to={`/admin/submissions/${submission.id}`} style={{ textDecoration: 'none' }}>
                               <Button
                                 variant="ghost"
@@ -262,7 +254,7 @@ export default function AdminDashboard({ userRole }) {
                     </div>
                     <div className="submissions-table__footer">
                       <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-tertiary)' }}>
-                        Showing {recentSubmissions.length} recent submissions
+                        Showing {recentSubmissions.length} recent clients
                       </span>
                       <Link
                         to="/admin/submissions"
@@ -272,7 +264,7 @@ export default function AdminDashboard({ userRole }) {
                           fontWeight: 500,
                         }}
                       >
-                        View all submissions →
+                        View all clients →
                       </Link>
                     </div>
                   </>
@@ -286,12 +278,12 @@ export default function AdminDashboard({ userRole }) {
             <Card>
               <Card.Header title="Quick Actions" icon={<BarChart3 />} />
               <Card.Body>
-                {QUICK_ACTIONS.filter(action => action.roles.includes(userRole || user?.role)).map((action, index) => {
+                {QUICK_ACTIONS.filter(action => action.roles.includes(role)).map((action, index) => {
                   let badge = null
-                  if (action.badgeKey === 'totalSubmissions') {
-                    badge = totalSubmissions > 0 ? `${totalSubmissions} total` : null
-                  } else if (action.badgeKey === 'myTasks') {
-                    badge = myTasks > 0 ? `${myTasks} pending` : null
+                  if (action.badgeKey === 'clients') {
+                    badge = totalClients > 0 ? `${totalClients} total` : null
+                  } else if (action.badgeKey === 'tasks') {
+                    badge = myTasks > 0 ? `${myTasks} assigned` : null
                   }
 
                   return (

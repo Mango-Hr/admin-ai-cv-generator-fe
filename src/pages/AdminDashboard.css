@@ -74,7 +74,8 @@
   color: var(--stat-color);
 }
 
-.stat-card--new {
+.stat-card--new,
+.stat-card--blue {
   --stat-bg: rgba(59, 130, 246, 0.1);
   --stat-color: var(--color-deco-blue);
 }

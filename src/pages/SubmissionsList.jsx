@@ -3,15 +3,10 @@ import { Link } from 'react-router-dom'
 import {
   FileStack,
   Search,
-  Filter,
-  Download,
   RefreshCw,
   Eye,
   Trash2,
-  UserPlus,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
+  Sparkles,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
@@ -21,7 +16,6 @@ import AdminLayout from '../components/layout/AdminLayout'
 import { Input } from '../components/shared/Input'
 import { Select } from '../components/shared/Input'
 import Button from '../components/shared/Button'
-import Badge from '../components/shared/Badge'
 import Skeleton from '../components/shared/Skeleton'
 import EmptyState from '../components/shared/EmptyState'
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '../components/shared/Modal/Modal'
@@ -29,14 +23,6 @@ import { useToast } from '../contexts/ToastContext'
 import { useAuth } from '../contexts/AuthContext'
 import { fetchSubmissions } from '../services/submissionsService'
 import './SubmissionsList.css'
-
-const STATUS_FILTERS = [
-  { value: 'all', label: 'All Status', icon: <FileStack />, count: 0 },
-  { value: 'new', label: 'New', icon: <AlertCircle />, count: 0 },
-  { value: 'in_progress', label: 'In Progress', icon: <Clock />, count: 0 },
-  { value: 'review', label: 'Review', icon: <Filter />, count: 0 },
-  { value: 'completed', label: 'Completed', icon: <CheckCircle2 />, count: 0 },
-]
 
 const ITEMS_PER_PAGE = 10
 
@@ -50,40 +36,22 @@ export default function SubmissionsList() {
   const [currentPage, setCurrentPage] = useState(1)
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, submissionId: null, submissionName: '' })
   const [deletingId, setDeletingId] = useState(null)
-  
+
   // Filters
   const [filters, setFilters] = useState({
     search: '',
-    status: 'all',
     assignedTo: 'all',
   })
-
-  // Status counts
-  const [statusCounts, setStatusCounts] = useState({
-    all: 0,
-    new: 0,
-    in_progress: 0,
-    review: 0,
-    completed: 0,
-  })
-
-  useEffect(() => {
-    loadData()
-  }, [])
-
-  useEffect(() => {
-    applyFilters()
-  }, [submissions, filters])
 
   const loadData = async () => {
     setLoading(true)
     try {
       const data = await fetchSubmissions()
       const submissionsData = data.submissions || []
-      
+
       setSubmissions(submissionsData)
     } catch (error) {
-      toast.error('Failed to load submissions')
+      toast.error('Failed to load clients')
       console.error(error)
     } finally {
       setLoading(false)
@@ -106,8 +74,8 @@ export default function SubmissionsList() {
       )
     }
 
-    // Assigned filter (applied before status for accurate counts)
-    if (filters.assignedTo !== 'all') {
+    // Assigned filter (main admin only)
+    if (!isSubAdmin && filters.assignedTo !== 'all') {
       if (filters.assignedTo === 'unassigned') {
         result = result.filter(s => !s.assigned_to)
       } else {
@@ -115,24 +83,18 @@ export default function SubmissionsList() {
       }
     }
 
-    // Calculate status counts based on filtered results (excluding status filter)
-    const counts = {
-      all: result.length,
-      new: result.filter(s => s.status === 'new').length,
-      in_progress: result.filter(s => s.status === 'in_progress').length,
-      review: result.filter(s => s.status === 'review').length,
-      completed: result.filter(s => s.status === 'completed').length,
-    }
-    setStatusCounts(counts)
-
-    // Status filter (applied after count calculation)
-    if (filters.status !== 'all') {
-      result = result.filter(s => s.status === filters.status)
-    }
-
     setFilteredSubmissions(result)
     setCurrentPage(1) // Reset to first page when filters change
   }
+
+  useEffect(() => {
+    loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    applyFilters()
+  }, [submissions, filters])
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }))
@@ -141,7 +103,6 @@ export default function SubmissionsList() {
   const handleClearFilters = () => {
     setFilters({
       search: '',
-      status: 'all',
       assignedTo: 'all',
     })
   }
@@ -166,10 +127,10 @@ export default function SubmissionsList() {
     try {
       // TODO: Replace with actual API call
       // await deleteSubmission(deleteModal.submissionId)
-      toast.success('Submission deleted successfully')
+      toast.success('Client deleted successfully')
       loadData()
     } catch (error) {
-      toast.error('Failed to delete submission')
+      toast.error('Failed to delete client')
       console.error(error)
     } finally {
       setDeletingId(null)
@@ -193,9 +154,11 @@ export default function SubmissionsList() {
         {/* Header */}
         <div className="submissions-list__header">
           <div className="submissions-list__title-section">
-            <h1 className="submissions-list__title">Submissions</h1>
+            <h1 className="submissions-list__title">Clients</h1>
             <p className="submissions-list__subtitle">
-              Manage all CV requests and track their progress
+              {isSubAdmin
+                ? 'Clients assigned to you'
+                : 'All clients and their tailoring activity'}
             </p>
           </div>
           <div className="submissions-list__actions">
@@ -206,9 +169,6 @@ export default function SubmissionsList() {
               disabled={loading}
             >
               Refresh
-            </Button>
-            <Button variant="ghost" icon={<Download />}>
-              Export
             </Button>
           </div>
         </div>
@@ -224,20 +184,6 @@ export default function SubmissionsList() {
                 value={filters.search}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
               />
-            </div>
-
-            <div className="filter-group">
-              <label className="filter-group__label">Status</label>
-              <Select
-                value={filters.status}
-                onChange={(e) => handleFilterChange('status', e.target.value)}
-              >
-                <option value="all">All Status</option>
-                <option value="new">New</option>
-                <option value="in_progress">In Progress</option>
-                <option value="review">Review</option>
-                <option value="completed">Completed</option>
-              </Select>
             </div>
 
             {!isSubAdmin && (
@@ -270,21 +216,6 @@ export default function SubmissionsList() {
           </div>
         </div>
 
-        {/* Status Pills */}
-        <div className="submissions-list__stats">
-          {STATUS_FILTERS.map((status) => (
-            <div
-              key={status.value}
-              className={`stat-pill ${filters.status === status.value ? 'stat-pill--active' : ''}`}
-              onClick={() => handleFilterChange('status', status.value)}
-            >
-              <span className="stat-pill__icon">{status.icon}</span>
-              <span className="stat-pill__label">{status.label}</span>
-              <span className="stat-pill__count">{statusCounts[status.value]}</span>
-            </div>
-          ))}
-        </div>
-
         {/* Data Table */}
         {loading ? (
           <div className="submissions-list__loading">
@@ -294,8 +225,10 @@ export default function SubmissionsList() {
           <div className="submissions-list__empty">
             <EmptyState
               icon={<FileStack />}
-              title="No submissions found"
-              description="Try adjusting your filters or search query"
+              title={isSubAdmin ? 'No clients assigned to you yet' : 'No clients found'}
+              description={isSubAdmin
+                ? 'Clients assigned to you by the main admin will appear here'
+                : 'Try adjusting your filters or search query'}
               action={
                 <Button variant="primary" onClick={handleClearFilters}>
                   Clear Filters
@@ -316,9 +249,8 @@ export default function SubmissionsList() {
                   <th>Reference ID</th>
                   <th>Target Position</th>
                   <th>Company</th>
-                  <th>Status</th>
                   {!isSubAdmin && <th>Assigned To</th>}
-                  <th>Submitted</th>
+                  <th>Added</th>
                   <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
@@ -350,9 +282,6 @@ export default function SubmissionsList() {
                         {submission.target_company || '—'}
                       </div>
                     </td>
-                    <td>
-                      <Badge variant={submission.status}>{submission.status}</Badge>
-                    </td>
                     {!isSubAdmin && (
                       <td>
                         {submission.assigned_to ? (
@@ -380,13 +309,31 @@ export default function SubmissionsList() {
                     </td>
                     <td>
                       <div className="table-cell-actions">
+                        <Link to={`/admin/submissions/${submission.id}/tailor`} style={{ textDecoration: 'none' }}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={<Sparkles />}
+                            title="Tailor Resume"
+                          />
+                        </Link>
                         <Link to={`/admin/submissions/${submission.id}`} style={{ textDecoration: 'none' }}>
                           <Button
                             variant="ghost"
                             size="sm"
                             icon={<Eye />}
+                            title="View Client"
                           />
                         </Link>
+                        {!isSubAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={<Trash2 />}
+                            title="Delete"
+                            onClick={() => handleDelete(submission.id, `${submission.client.first_name} ${submission.client.last_name}`)}
+                          />
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -398,7 +345,7 @@ export default function SubmissionsList() {
             <div className="submissions-list__pagination">
               <div className="submissions-list__pagination-info">
                 Showing {startIndex + 1}-{Math.min(endIndex, filteredSubmissions.length)} of{' '}
-                {filteredSubmissions.length} submissions
+                {filteredSubmissions.length} clients
               </div>
               <div className="submissions-list__pagination-controls">
                 <Button
@@ -430,10 +377,10 @@ export default function SubmissionsList() {
         onClose={() => setDeleteModal({ isOpen: false, submissionId: null, submissionName: '' })}
         size="sm"
       >
-        <ModalHeader title="Delete Submission" onClose={() => setDeleteModal({ isOpen: false, submissionId: null, submissionName: '' })} />
+        <ModalHeader title="Delete Client" onClose={() => setDeleteModal({ isOpen: false, submissionId: null, submissionName: '' })} />
         <ModalBody>
           <p style={{ marginBottom: 'var(--space-4)', color: 'var(--color-text-secondary)' }}>
-            Are you sure you want to delete this submission from <strong>{deleteModal.submissionName}</strong>? This action cannot be undone.
+            Are you sure you want to delete <strong>{deleteModal.submissionName}</strong> and all their records? This action cannot be undone.
           </p>
         </ModalBody>
         <ModalFooter>
@@ -456,4 +403,3 @@ export default function SubmissionsList() {
     </AdminLayout>
   )
 }
-

@@ -11,7 +11,7 @@ import AdminChat from './pages/AdminChat'
 import TaskManagement from './pages/TaskManagement'
 import StaffManagement from './pages/StaffManagement'
 import PromptManagement from './pages/PromptManagement'
-import CVGeneration from './pages/CVGeneration'
+import TailorResume from './pages/TailorResume'
 import SettingsPage from './pages/Settings'
 import './index.css'
 
@@ -98,6 +98,14 @@ function App() {
               }
             />
             <Route
+              path="/admin/submissions/:id/tailor"
+              element={
+                <ProtectedRoute requireRole={['super_admin', 'sub_admin']}>
+                  <TailorResume />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/admin/chat/:referenceId"
               element={
                 <ProtectedRoute requireRole={['super_admin', 'sub_admin']}>
@@ -126,14 +134,6 @@ function App() {
               element={
                 <ProtectedRoute requireRole="super_admin">
                   <PromptManagement />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/generate/:id"
-              element={
-                <ProtectedRoute requireRole="super_admin">
-                  <CVGeneration />
                 </ProtectedRoute>
               }
             />
