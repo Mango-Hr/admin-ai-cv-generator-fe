@@ -124,7 +124,7 @@ function App() {
             <Route
               path="/admin/staff"
               element={
-                <ProtectedRoute requireRole="super_admin">
+                <ProtectedRoute requireRole={["super_admin", "sub_admin"]}>
                   <StaffManagement />
                 </ProtectedRoute>
               }
@@ -132,7 +132,7 @@ function App() {
             <Route
               path="/admin/prompts"
               element={
-                <ProtectedRoute requireRole="super_admin">
+                <ProtectedRoute requireRole={["super_admin", "sub_admin"]}>
                   <PromptManagement />
                 </ProtectedRoute>
               }
