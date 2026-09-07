@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Button from '../components/shared/Button'
@@ -24,12 +24,22 @@ export default function Login() {
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
 
+  const location = useLocation()
+  const prefillEmail = location.state?.email || ''
+
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated()) {
       navigate('/admin')
     }
   }, [])
+
+  // Pre-fill email if navigated from forgot password
+  useEffect(() => {
+    if (prefillEmail && !formData.email) {
+      setFormData(prev => ({ ...prev, email: prefillEmail }))
+    }
+  }, [prefillEmail])
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -166,18 +176,23 @@ export default function Login() {
               </button>
             </div>
 
-            <div className="login__remember">
-              <input
-                type="checkbox"
-                id="remember"
-                name="remember"
-                checked={formData.remember}
-                onChange={handleChange}
-                className="login__checkbox"
-              />
-              <label htmlFor="remember" className="login__remember-label">
-                Remember me
-              </label>
+            <div className="login__remember-row">
+              <div className="login__remember">
+                <input
+                  type="checkbox"
+                  id="remember"
+                  name="remember"
+                  checked={formData.remember}
+                  onChange={handleChange}
+                  className="login__checkbox"
+                />
+                <label htmlFor="remember" className="login__remember-label">
+                  Remember me
+                </label>
+              </div>
+              <Link to="/forgot-password" className="login__forgot-link">
+                Forgot Password?
+              </Link>
             </div>
 
             <Button

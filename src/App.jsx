@@ -4,6 +4,8 @@ import { ToastProvider } from './contexts/ToastContext'
 import { AuthProvider, ProtectedRoute, useAuth } from './contexts/AuthContext'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import AdminDashboard from './pages/AdminDashboard'
 import SubmissionsList from './pages/SubmissionsList'
 import SubmissionDetail from './pages/SubmissionDetail'
@@ -67,9 +69,11 @@ function App() {
         <Router>
           <HashCleanup />
           <Routes>
-            {/* Login & Signup Routes */}
+            {/* Auth Routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/" element={<Login />} />
 
             {/* Protected Admin Routes */}

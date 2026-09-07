@@ -123,10 +123,29 @@
   display: flex;
 }
 
+.login__remember-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .login__remember {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+}
+
+.login__forgot-link {
+  font-size: var(--text-sm);
+  color: var(--color-deco-blue);
+  font-weight: 500;
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.login__forgot-link:hover {
+  color: var(--color-accent-hover);
+  text-decoration: underline;
 }
 
 .login__checkbox {
