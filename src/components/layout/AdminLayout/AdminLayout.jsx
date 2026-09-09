@@ -36,8 +36,8 @@ const NAV_ITEMS = [
   {
     section: 'Management',
     items: [
-      { path: '/admin/staff', icon: <Users />, label: 'Staff', roles: ['super_admin', 'sub_admin'] },
-      { path: '/admin/prompts', icon: <FileCode />, label: 'Prompts', roles: ['super_admin', 'sub_admin'] },
+      { path: '/admin/staff', icon: <Users />, label: 'Staff', roles: ['super_admin'] },
+      { path: '/admin/prompts', icon: <FileCode />, label: 'Prompts', roles: ['super_admin'] },
     ],
   },
 ]
