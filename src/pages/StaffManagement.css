@@ -323,8 +323,8 @@
 }
 
 .staff-management__tab--active {
-  color: var(--color-deco-blue);
-  border-bottom-color: var(--color-deco-blue);
+  color: var(--color-text-primary);
+  border-bottom-color: var(--color-text-primary);
 }
 
 .staff-management__tab-badge {
@@ -447,20 +447,39 @@
    Mobile Responsive
    ============================================ */
 
+@media (max-width: 1024px) {
+  .invitations-row__content {
+    gap: var(--space-4);
+  }
+
+  .invitations-row__expires {
+    display: none;
+  }
+}
+
 @media (max-width: 768px) {
   .staff-management__tabs {
     gap: var(--space-3);
   }
 
   .staff-management__tab {
-    padding: var(--space-3);
+    padding: var(--space-2) var(--space-3);
     font-size: 0.75rem;
+    gap: var(--space-1);
+  }
+
+  .staff-management__tab-badge {
+    width: 18px;
+    height: 18px;
+    font-size: 0.65rem;
+    margin-left: var(--space-1);
   }
 
   .invitations-row {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-3);
+    padding: var(--space-4);
   }
 
   .invitations-row__content {
@@ -469,8 +488,26 @@
     width: 100%;
   }
 
+  .invitations-row__email {
+    width: 100%;
+    flex-direction: row;
+  }
+
   .invitations-row__status {
-    align-items: flex-start;
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  .invitations-row__badge-container {
+    justify-content: flex-start;
+  }
+
+  .invitations-row__expires {
+    display: block;
+    text-align: left;
     width: 100%;
   }
 
@@ -481,5 +518,46 @@
 
   .invitations-row__actions button {
     width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .staff-management__tab {
+    padding: var(--space-2);
+    font-size: 0.7rem;
+  }
+
+  .staff-management__tab svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .invitations-row {
+    padding: var(--space-3);
+    gap: var(--space-2);
+  }
+
+  .invitations-row__content {
+    gap: var(--space-2);
+  }
+
+  .invitations-row__email-label {
+    font-size: 0.75rem;
+  }
+
+  .invitations-row__email-role {
+    font-size: 0.65rem;
+  }
+
+  .invitations-row__date {
+    font-size: 0.65rem;
+  }
+
+  .invitations-row__expires {
+    font-size: 0.65rem;
+  }
+
+  .invitations-row__status {
+    gap: var(--space-2);
   }
 }

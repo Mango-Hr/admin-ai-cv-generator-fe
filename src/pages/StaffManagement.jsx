@@ -188,10 +188,7 @@ export default function StaffManagement() {
             onClick={() => setActiveTab('invitations')}
           >
             <Mail size={18} />
-            Pending Invitations
-            {invitations.length > 0 && (
-              <span className="staff-management__tab-badge">{invitations.length}</span>
-            )}
+            Invitations
           </button>
         </div>
 
