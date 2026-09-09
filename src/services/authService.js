@@ -116,4 +116,108 @@ export const getStoredAdminUser = () => {
   return user ? JSON.parse(user) : null
 }
 
+/**
+ * Send invitation to a new admin
+ * POST /api/v1/admin/invitations
+ * Restricted to super_admin
+ */
+export const sendAdminInvitation = async (email, role) => {
+  try {
+    const response = await authApi.post('/invitations', {
+      email,
+      role,
+    })
+    return response.data.data
+  } catch (error) {
+    const message = error.response?.data?.message || error.message
+    throw new Error(message)
+  }
+}
+
+/**
+ * List all admin invitations
+ * GET /api/v1/admin/invitations
+ * Restricted to super_admin
+ */
+export const listAdminInvitations = async () => {
+  try {
+    const response = await authApi.get('/invitations')
+    return response.data.data || []
+  } catch (error) {
+    const message = error.response?.data?.message || error.message
+    throw new Error(message)
+  }
+}
+
+/**
+ * Revoke an invitation
+ * PATCH /api/v1/admin/invitations/{invitation_id}/revoke
+ * Restricted to super_admin
+ */
+export const revokeAdminInvitation = async (invitationId) => {
+  try {
+    const response = await authApi.patch(`/invitations/${invitationId}/revoke`)
+    return response.data.data
+  } catch (error) {
+    const message = error.response?.data?.message || error.message
+    throw new Error(message)
+  }
+}
+
+/**
+ * Verify invitation token
+ * GET /api/v1/admin/invitations/verify?token={token}
+ * No authentication required
+ */
+export const verifyInvitationToken = async (token) => {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/invitations/verify?token=${encodeURIComponent(token)}`
+    )
+    return response.data.data
+  } catch (error) {
+    const message = error.response?.data?.message || error.message
+    throw new Error(message)
+  }
+}
+
+/**
+ * Accept invitation
+ * POST /api/v1/admin/invitations/accept
+ * No authentication required
+ */
+export const acceptAdminInvitation = async (token, firstName, lastName, password, phone, gender) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/invitations/accept`, {
+      token,
+      first_name: firstName,
+      last_name: lastName,
+      password,
+      phone,
+      gender,
+    })
+    return response.data.data
+  } catch (error) {
+    const message = error.response?.data?.message || error.message
+    throw new Error(message)
+  }
+}
+
+/**
+ * Decline invitation
+ * POST /api/v1/admin/invitations/decline
+ * No authentication required
+ */
+export const declineAdminInvitation = async (token) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/invitations/decline`, {
+      token,
+    })
+    return response.data.data
+  } catch (error) {
+    const message = error.response?.data?.message || error.message
+    throw new Error(message)
+  }
+}
+
 export default authApi

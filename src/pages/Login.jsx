@@ -213,10 +213,7 @@ export default function Login() {
           {/* Footer */}
           <div className="login__footer">
             <p className="login__footer-text">
-              Don't have an account?{' '}
-              <Link to="/signup" className="login__footer-link">
-                Sign Up
-              </Link>
+              Need help? <a href="mailto:support@example.com" className="login__footer-link">Contact Support</a>
             </p>
           </div>
         </div>

@@ -19,6 +19,7 @@ import Badge from '../components/shared/Badge'
 import { default as Avatar } from '../components/shared/Avatar'
 import Skeleton from '../components/shared/Skeleton'
 import EmptyState from '../components/shared/EmptyState'
+import InviteAdminModal from '../components/shared/InviteAdminModal'
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '../components/shared/Modal/Modal'
 import { useToast } from '../contexts/ToastContext'
 import { fetchStaffList, deleteStaffMember } from '../services/staffService'
@@ -31,6 +32,7 @@ export default function StaffManagement() {
   const [stats, setStats] = useState({ total_staff: 0, active_members: 0, avg_workload: 0 })
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, staffId: null, staffName: '' })
   const [deleting, setDeleting] = useState(false)
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
 
   useEffect(() => {
     loadStaff()
@@ -56,7 +58,7 @@ export default function StaffManagement() {
   }
 
   const handleAddStaff = () => {
-    toast.info('Add staff feature coming soon')
+    setIsInviteModalOpen(true)
   }
 
   const handleEdit = (member) => {
@@ -295,6 +297,13 @@ export default function StaffManagement() {
           </Button>
         </ModalFooter>
       </Modal>
+
+      {/* Invite Admin Modal */}
+      <InviteAdminModal
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+        onSuccess={loadStaff}
+      />
     </AdminLayout>
   )
 }
