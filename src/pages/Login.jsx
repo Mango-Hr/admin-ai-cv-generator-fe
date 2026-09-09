@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
-import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react'
+import { Mail, Lock, ArrowRight, Eye, EyeOff, HelpCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Button from '../components/shared/Button'
 import { Input } from '../components/shared/Input'
@@ -190,7 +190,8 @@ export default function Login() {
                   Remember me
                 </label>
               </div>
-              <Link to="/forgot-password" className="login__forgot-link">
+              <Link to="/forgot-password" className="login__forgot-link" title="Reset your password">
+                <HelpCircle size={16} />
                 Forgot Password?
               </Link>
             </div>

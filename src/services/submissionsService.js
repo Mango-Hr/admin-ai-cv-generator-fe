@@ -207,3 +207,26 @@ export const submitPasswordReset = async (token, newPassword) => {
     throw new Error(message)
   }
 }
+
+/**
+ * Get available prompts for the Tailor Resume prompt selector.
+ * Fetches active prompts only for the dropdown.
+ * GET /prompts?is_active=true
+ */
+export const getAvailablePrompts = async () => {
+  try {
+    const response = await authApi.get('/prompts?is_active=true')
+    let prompts = response.data.data || []
+    
+    // Handle different response structures
+    if (prompts && typeof prompts === 'object' && !Array.isArray(prompts)) {
+      prompts = prompts.prompts || prompts.data || []
+    }
+    
+    // Ensure prompts is an array
+    return Array.isArray(prompts) ? prompts : []
+  } catch (error) {
+    console.error('Failed to fetch available prompts:', error)
+    return []
+  }
+}

@@ -13,6 +13,7 @@ import {
   User,
   Loader2,
   AlertTriangle,
+  Zap,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 
@@ -30,6 +31,7 @@ import {
   updateJobDescription,
   tailorResume,
   getAvailableModels,
+  getAvailablePrompts,
 } from '../services/submissionsService'
 import { getSubmissionDocuments, downloadDocument, askAIQuestion } from '../services/aiService'
 import { classifyDocument, buildDownloadName } from '../utils/documentNames'
@@ -45,6 +47,7 @@ export default function TailorResume() {
   const [documents, setDocuments] = useState([])
   const [models, setModels] = useState([])
   const [modelsSource, setModelsSource] = useState('openai_api')
+  const [prompts, setPrompts] = useState([])
 
   // Core tailoring inputs
   const [resumeText, setResumeText] = useState('')
@@ -55,6 +58,7 @@ export default function TailorResume() {
 
   // Model selection
   const [selectedModel, setSelectedModel] = useState('gpt-4o')
+  const [selectedPromptId, setSelectedPromptId] = useState('auto') // 'auto' for smart selection, or specific prompt ID
 
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false)
@@ -81,10 +85,11 @@ export default function TailorResume() {
     const loadData = async () => {
       setLoading(true)
       try {
-        const [submissionData, modelsResponse, docsData] = await Promise.all([
+        const [submissionData, modelsResponse, docsData, promptsData] = await Promise.all([
           fetchSubmissionById(id),
           getAvailableModels().catch(() => null),
           getSubmissionDocuments(id).catch(() => []),
+          getAvailablePrompts().catch(() => []),
         ])
 
         if (!submissionData) {
@@ -95,6 +100,7 @@ export default function TailorResume() {
 
         setSubmission(submissionData)
         setDocuments(Array.isArray(docsData) ? docsData : [])
+        setPrompts(Array.isArray(promptsData) ? promptsData : [])
 
         // Models
         if (modelsResponse) {
@@ -211,6 +217,7 @@ export default function TailorResume() {
       const result = await tailorResume(id, {
         provider: 'openai',
         model: selectedModel,
+        prompt_id: selectedPromptId === 'auto' ? null : selectedPromptId,
         custom_instructions: instructions || null,
         include_chat_history: true,
       })
@@ -458,9 +465,45 @@ export default function TailorResume() {
                     </div>
                   </div>
 
-                  {/* 4. AI Model selector */}
+                  {/* 4. Prompt template selector */}
                   <div className="tailor-form__step">
                     <div className="tailor-form__step-number">4</div>
+                    <div className="tailor-form__step-body">
+                      <label className="tailor-form__label">AI Prompt Template</label>
+                      <p className="tailor-form__hint">
+                        Choose a prompt template to guide the AI tailoring. Select "Auto" to let the AI smart-match based on the job title.
+                      </p>
+                      {prompts.length > 0 || true ? (
+                        <Select
+                          value={selectedPromptId}
+                          onChange={(e) => setSelectedPromptId(e.target.value)}
+                        >
+                          <option value="auto">
+                            Auto — Smart role matching (recommended)
+                          </option>
+                          <optgroup label="Custom Prompts">
+                            {prompts.map(p => (
+                              <option key={p.id} value={p.id}>
+                                {p.title || p.name} {p.category ? `— ${p.category}` : ''} ({p.usage_count || 0} uses)
+                              </option>
+                            ))}
+                          </optgroup>
+                        </Select>
+                      ) : (
+                        <div className="tailor-form__empty-prompt">
+                          No custom prompts created yet. Using auto-selection.
+                        </div>
+                      )}
+                      <div className="tailor-form__tip" style={{ marginTop: 'var(--space-3)' }}>
+                        <Zap size={14} />
+                        <span>Auto mode reads the job title and selects the best matching prompt automatically.</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 5. AI Model selector */}
+                  <div className="tailor-form__step">
+                    <div className="tailor-form__step-number">5</div>
                     <div className="tailor-form__step-body">
                       <label className="tailor-form__label">AI Model</label>
                       <p className="tailor-form__hint">

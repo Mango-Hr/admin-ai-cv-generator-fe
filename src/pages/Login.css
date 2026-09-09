@@ -140,12 +140,23 @@
   color: var(--color-deco-blue);
   font-weight: 500;
   text-decoration: none;
-  transition: color var(--transition-fast);
+  transition: all var(--transition-fast);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .login__forgot-link:hover {
-  color: var(--color-accent-hover);
-  text-decoration: underline;
+  color: white;
+  background: var(--color-deco-blue);
+  text-decoration: none;
+  transform: translateX(2px);
+}
+
+.login__forgot-link:active {
+  transform: translateX(0);
 }
 
 .login__checkbox {
