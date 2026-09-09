@@ -66,6 +66,7 @@ export default function InviteAdminModal({ isOpen, onClose, onSuccess }) {
     try {
       await sendAdminInvitation(formData.email, formData.role)
       setSuccess(true)
+      setLoading(false)
       toast.success(`Invitation sent to ${formData.email}`)
 
       // Reset and close after a delay

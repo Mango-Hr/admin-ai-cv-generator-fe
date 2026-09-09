@@ -289,3 +289,197 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* ============================================
+   Tabs
+   ============================================ */
+
+.staff-management__tabs {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.staff-management__tab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.staff-management__tab:hover {
+  color: var(--color-text-primary);
+}
+
+.staff-management__tab--active {
+  color: var(--color-deco-blue);
+  border-bottom-color: var(--color-deco-blue);
+}
+
+.staff-management__tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-deco-blue);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-left: var(--space-2);
+}
+
+/* ============================================
+   Invitations Section
+   ============================================ */
+
+.invitations-section {
+  width: 100%;
+}
+
+.invitations-table {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.invitations-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-5);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-base);
+}
+
+.invitations-row:hover {
+  box-shadow: var(--shadow-sm);
+  border-color: var(--color-border-light);
+}
+
+.invitations-row__content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  flex: 1;
+  min-width: 0;
+}
+
+.invitations-row__email {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  flex: 1;
+}
+
+.invitations-row__email svg {
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+}
+
+.invitations-row__email-label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text-primary);
+  word-break: break-all;
+}
+
+.invitations-row__email-role {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  margin-top: 2px;
+}
+
+.invitations-row__status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+  min-width: fit-content;
+}
+
+.invitations-row__badge-container {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.invitations-row__date {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+.invitations-row__expires {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.invitations-row__label {
+  font-weight: 500;
+}
+
+.invitations-row__actions {
+  margin-left: var(--space-4);
+  flex-shrink: 0;
+}
+
+/* ============================================
+   Mobile Responsive
+   ============================================ */
+
+@media (max-width: 768px) {
+  .staff-management__tabs {
+    gap: var(--space-3);
+  }
+
+  .staff-management__tab {
+    padding: var(--space-3);
+    font-size: 0.75rem;
+  }
+
+  .invitations-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
+  .invitations-row__content {
+    flex-direction: column;
+    gap: var(--space-3);
+    width: 100%;
+  }
+
+  .invitations-row__status {
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .invitations-row__actions {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .invitations-row__actions button {
+    width: 100%;
+  }
+}

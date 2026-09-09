@@ -1,0 +1,327 @@
+/* ============================================
+   Accept Invitation Page
+   ============================================ */
+
+.accept-invitation {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, 
+    rgba(59, 130, 246, 0.05) 0%, 
+    rgba(168, 85, 247, 0.05) 100%
+  );
+  padding: var(--space-4);
+}
+
+.accept-invitation__container {
+  width: 100%;
+  max-width: 560px;
+}
+
+/* ============================================
+   Card
+   ============================================ */
+
+.accept-invitation__card {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  padding: var(--space-8);
+}
+
+/* ============================================
+   Header
+   ============================================ */
+
+.accept-invitation__header {
+  text-align: center;
+  margin-bottom: var(--space-8);
+}
+
+.accept-invitation__logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-4);
+}
+
+.accept-invitation__title {
+  font-size: var(--text-2xl);
+  font-weight: 650;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.accept-invitation__subtitle {
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+}
+
+/* ============================================
+   Form
+   ============================================ */
+
+.accept-invitation__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.accept-invitation__info-box {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: rgba(59, 130, 246, 0.06);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.accept-invitation__info-box svg {
+  color: var(--color-deco-blue);
+  flex-shrink: 0;
+}
+
+.accept-invitation__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+.accept-invitation__password-field {
+  position: relative;
+  width: 100%;
+}
+
+.accept-invitation__password-toggle {
+  position: absolute;
+  right: var(--space-3);
+  top: 38px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  transition: color var(--transition-fast), background var(--transition-fast);
+  z-index: 10;
+  line-height: 1;
+}
+
+.accept-invitation__password-toggle:hover {
+  color: var(--color-text-secondary);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.accept-invitation__password-toggle:active {
+  transform: scale(0.95);
+}
+
+.accept-invitation__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.accept-invitation__label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.accept-invitation__error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-md);
+  color: #ef4444;
+  font-size: var(--text-sm);
+}
+
+.accept-invitation__error svg {
+  flex-shrink: 0;
+}
+
+.accept-invitation__actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.accept-invitation__actions > button {
+  flex: 1;
+}
+
+/* ============================================
+   Loading
+   ============================================ */
+
+.accept-invitation__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-4);
+  min-height: 300px;
+}
+
+.accept-invitation__spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(59, 130, 246, 0.2);
+  border-top-color: var(--color-deco-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.accept-invitation__loading p {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+/* ============================================
+   Success
+   ============================================ */
+
+.accept-invitation__success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+}
+
+.accept-invitation__success-icon {
+  color: var(--color-success);
+  width: 64px;
+  height: 64px;
+}
+
+.accept-invitation__success-title {
+  font-size: var(--text-xl);
+  font-weight: 650;
+  color: var(--color-text-primary);
+  margin-top: var(--space-2);
+}
+
+.accept-invitation__success-message {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+}
+
+/* ============================================
+   Decline Confirm
+   ============================================ */
+
+.accept-invitation__decline-confirm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+}
+
+.accept-invitation__decline-icon {
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.accept-invitation__decline-text {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  max-width: 400px;
+}
+
+/* ============================================
+   Error
+   ============================================ */
+
+.accept-invitation__error-full {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+}
+
+.accept-invitation__error-icon {
+  color: #ef4444;
+  width: 64px;
+  height: 64px;
+}
+
+.accept-invitation__error-title {
+  font-size: var(--text-xl);
+  font-weight: 650;
+  color: var(--color-text-primary);
+  margin-top: var(--space-2);
+}
+
+.accept-invitation__error-message {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  margin-bottom: var(--space-2);
+}
+
+.accept-invitation__error-full button {
+  margin-top: var(--space-4);
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+
+@media (max-width: 768px) {
+  .accept-invitation__card {
+    padding: var(--space-6);
+  }
+
+  .accept-invitation__row {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+
+  .accept-invitation__title {
+    font-size: var(--text-xl);
+  }
+
+  .accept-invitation__actions {
+    flex-direction: column;
+  }
+
+  .accept-invitation__actions > button {
+    width: 100%;
+  }
+}

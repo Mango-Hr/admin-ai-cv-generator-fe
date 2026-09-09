@@ -5,6 +5,7 @@ import { AuthProvider, ProtectedRoute, useAuth } from './contexts/AuthContext'
 import Login from './pages/Login'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
+import AcceptInvitation from './pages/AcceptInvitation'
 import AdminDashboard from './pages/AdminDashboard'
 import SubmissionsList from './pages/SubmissionsList'
 import SubmissionDetail from './pages/SubmissionDetail'
@@ -72,6 +73,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/accept-invite" element={<AcceptInvitation />} />
             <Route path="/" element={<Login />} />
 
             {/* Protected Admin Routes */}

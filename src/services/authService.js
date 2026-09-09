@@ -186,15 +186,15 @@ export const verifyInvitationToken = async (token) => {
  * POST /api/v1/admin/invitations/accept
  * No authentication required
  */
-export const acceptAdminInvitation = async (token, firstName, lastName, password, phone, gender) => {
+export const acceptAdminInvitation = async (invitationData) => {
   try {
     const response = await axios.post(`${BASE_URL}/invitations/accept`, {
-      token,
-      first_name: firstName,
-      last_name: lastName,
-      password,
-      phone,
-      gender,
+      token: invitationData.token,
+      first_name: invitationData.first_name,
+      last_name: invitationData.last_name,
+      password: invitationData.password,
+      phone: invitationData.phone,
+      gender: invitationData.gender,
     })
     return response.data.data
   } catch (error) {
@@ -208,10 +208,10 @@ export const acceptAdminInvitation = async (token, firstName, lastName, password
  * POST /api/v1/admin/invitations/decline
  * No authentication required
  */
-export const declineAdminInvitation = async (token) => {
+export const declineAdminInvitation = async (invitationData) => {
   try {
     const response = await axios.post(`${BASE_URL}/invitations/decline`, {
-      token,
+      token: invitationData.token,
     })
     return response.data.data
   } catch (error) {
