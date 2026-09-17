@@ -5,18 +5,13 @@ import chatService from '../../services/chatService'
 import { openAttachment, downloadAttachment } from '../../utils/attachmentProxy'
 
 /** Extract a display name from an attachment object, trying common field names */
-const getAttachmentName = (attachment) => {
-  console.log('[Chat] Attachment object:', attachment)
-  return (
-    attachment.original_name ||
-    attachment.file_name ||
-    attachment.filename ||
-    attachment.name ||
-    attachment.file_name_original ||
-    attachment.display_name ||
-    'Attachment'
-  )
-}
+const getAttachmentName = (attachment) =>
+  attachment.original_filename ||
+  attachment.original_name ||
+  attachment.file_name ||
+  attachment.filename ||
+  attachment.name ||
+  'Attachment'
 import './Chat.css'
 
 const formatTime = (dateString) => {

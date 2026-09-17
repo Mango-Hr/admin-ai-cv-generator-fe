@@ -55,8 +55,7 @@ async function fetchAttachmentBlob(proxyUrl, token) {
   // Try to extract a filename from the Content-Disposition header
   const cd = response.headers.get('content-disposition')
   const headerName = filenameFromContentDisposition(cd)
-  console.log('[AttachmentProxy] Content-Disposition:', cd, '→ parsed:', headerName)
-  console.log('[AttachmentProxy] Response content-type:', response.headers.get('content-type'))
+  console.log('[AttachmentProxy] Content-Disposition:', cd, '→ parsed:', headerName || filenameFromPublicId(proxyUrl))
 
   return { blob, fileName: headerName }
 }
@@ -111,11 +110,7 @@ export async function downloadAttachment(publicId, fileName, token) {
     const { blob, fileName: headerFileName } = await fetchAttachmentBlob(proxyUrl, authToken)
     // Pick best available name: explicit param → header → last segment of public_id
     const downloadName = fileName || headerFileName || filenameFromPublicId(publicId) || 'download'
-    console.log('[AttachmentProxy] Download name:', downloadName, {
-      fromParam: fileName,
-      fromHeader: headerFileName,
-      fromPublicId: filenameFromPublicId(publicId),
-    })
+
 
     const objectUrl = URL.createObjectURL(blob)
     const a = document.createElement('a')
