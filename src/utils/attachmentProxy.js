@@ -9,6 +9,84 @@ export const buildAdminAttachmentProxyUrl = (publicId) => {
 }
 
 /**
+ * Fetch an attachment as a blob with auth headers.
+ * @param {string} proxyUrl - The proxy URL to fetch from
+ * @param {string} token - The JWT auth token
+ * @returns {Promise<Blob>} The file as a Blob
+ */
+async function fetchAttachmentBlob(proxyUrl, token) {
+  const response = await fetch(proxyUrl, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to load attachment: ${response.status}`)
+  }
+
+  return response.blob()
+}
+
+/**
+ * Open an attachment in a new tab by fetching it as a blob first
+ * (the proxy endpoint requires an auth header, so we can't use a direct URL).
+ *
+ * @param {string} publicId - The attachment public_id from backend
+ * @param {string} [token] - Optional JWT token; falls back to localStorage 'admin_token'
+ */
+export async function openAttachment(publicId, token) {
+  const proxyUrl = buildAdminAttachmentProxyUrl(publicId)
+  if (!proxyUrl) return
+
+  const authToken = token || localStorage.getItem('admin_token')
+  if (!authToken) {
+    console.error('[AttachmentProxy] No auth token available')
+    return
+  }
+
+  try {
+    const blob = await fetchAttachmentBlob(proxyUrl, authToken)
+    const objectUrl = URL.createObjectURL(blob)
+    window.open(objectUrl, '_blank')
+    // Revoke after a short delay to allow the browser to open it
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000)
+  } catch (error) {
+    console.error('[AttachmentProxy] Failed to open attachment:', error)
+  }
+}
+
+/**
+ * Download an attachment by fetching it as a blob and triggering a download.
+ *
+ * @param {string} publicId - The attachment public_id from backend
+ * @param {string} [fileName] - Optional filename; extracted from public_id if omitted
+ * @param {string} [token] - Optional JWT token; falls back to localStorage 'admin_token'
+ */
+export async function downloadAttachment(publicId, fileName, token) {
+  const proxyUrl = buildAdminAttachmentProxyUrl(publicId)
+  if (!proxyUrl) return
+
+  const authToken = token || localStorage.getItem('admin_token')
+  if (!authToken) {
+    console.error('[AttachmentProxy] No auth token available')
+    return
+  }
+
+  try {
+    const blob = await fetchAttachmentBlob(proxyUrl, authToken)
+    const objectUrl = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = objectUrl
+    a.download = fileName || publicId.split('/').pop()
+    a.click()
+    URL.revokeObjectURL(objectUrl)
+  } catch (error) {
+    console.error('[AttachmentProxy] Failed to download attachment:', error)
+  }
+}
+
+/**
  * Build attachment proxy URL for client side
  * @param {string} submissionId - The submission ID
  * @param {string} publicId - The attachment public_id from backend

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Send, Paperclip, MessageCircle, Loader } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import chatService from '../../services/chatService'
-import { buildAdminAttachmentProxyUrl } from '../../utils/attachmentProxy'
+import { openAttachment, downloadAttachment } from '../../utils/attachmentProxy'
 import './Chat.css'
 
 const formatTime = (dateString) => {
@@ -259,16 +259,25 @@ export default function Chat({ submissionId, jwtToken, staffName = 'Support' }) 
                       {msg.attachments && msg.attachments.length > 0 && (
                         <div className="chat__message-attachments">
                           {msg.attachments.map((attachment, idx) => (
-                            <a
-                              key={idx}
-                              href={buildAdminAttachmentProxyUrl(attachment.public_id)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="chat__message-attachment"
-                            >
-                              <Paperclip className="chat__attachment-icon" />
-                              <span className="chat__attachment-name">{attachment.name}</span>
-                            </a>
+                            <div key={idx} className="chat__message-attachment-wrapper">
+                              <button
+                                type="button"
+                                className="chat__message-attachment"
+                                onClick={() => openAttachment(attachment.public_id)}
+                                title="Open attachment"
+                              >
+                                <Paperclip className="chat__attachment-icon" />
+                                <span className="chat__attachment-name">{attachment.name}</span>
+                              </button>
+                              <button
+                                type="button"
+                                className="chat__attachment-download-btn"
+                                onClick={() => downloadAttachment(attachment.public_id, attachment.name)}
+                                title="Download attachment"
+                              >
+                                ↓
+                              </button>
+                            </div>
                           ))}
                         </div>
                       )}

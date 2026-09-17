@@ -204,17 +204,49 @@
   border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 
+.chat__message-attachment-wrapper {
+  display: flex;
+  align-items: stretch;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
 .chat__message-attachment {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2);
   background: rgba(0, 0, 0, 0.05);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
   font-size: var(--text-sm);
   color: var(--color-text-primary);
   text-decoration: none;
+  border: none;
+  cursor: pointer;
+  flex: 1;
+  text-align: left;
+  font-family: inherit;
   transition: background var(--transition-fast);
+}
+
+.chat__attachment-download-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2) var(--space-3);
+  background: rgba(0, 0, 0, 0.1);
+  border: none;
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  font-weight: 600;
+}
+
+.chat__attachment-download-btn:hover {
+  background: rgba(0, 0, 0, 0.15);
 }
 
 .chat__message-attachment:hover {
@@ -228,6 +260,16 @@
 
 .chat__message--own .chat__message-attachment:hover {
   background: rgba(255, 255, 255, 0.3);
+}
+
+.chat__message--own .chat__attachment-download-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border-left-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.chat__message--own .chat__attachment-download-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .chat__attachment-icon {
