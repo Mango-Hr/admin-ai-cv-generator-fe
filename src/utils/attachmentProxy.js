@@ -11,10 +11,33 @@ export const buildAdminAttachmentProxyUrl = (publicId) => {
 }
 
 /**
+ * Extract a filename from a Cloudinary public_id.
+ * e.g. "ai_cv_generator/chat_attachments/stream_j964ly" → "stream_j964ly"
+ * e.g. "ai_cv_generator/chat_attachments/my_resume.pdf" → "my_resume.pdf"
+ */
+function filenameFromPublicId(publicId) {
+  if (!publicId) return null
+  const parts = publicId.split('/')
+  return parts[parts.length - 1] || null
+}
+
+/**
+ * Parse a filename from a Content-Disposition header value.
+ * e.g. "attachment; filename=\"report.pdf\"" → "report.pdf"
+ */
+function filenameFromContentDisposition(header) {
+  if (!header) return null
+  const match = header.match(/filename\*?=(?:UTF-8''|"?)([^"\s;]+)/i)
+  return match ? decodeURIComponent(match[1].replace(/"/g, '')) : null
+}
+
+/**
  * Fetch an attachment as a blob with auth headers.
+ * Returns the blob plus any filename discovered from the response.
+ *
  * @param {string} proxyUrl - The proxy URL to fetch from
  * @param {string} token - The JWT auth token
- * @returns {Promise<Blob>} The file as a Blob
+ * @returns {Promise<{ blob: Blob, fileName: string|null }>} The blob and inferred filename
  */
 async function fetchAttachmentBlob(proxyUrl, token) {
   const response = await fetch(proxyUrl, {
@@ -27,7 +50,15 @@ async function fetchAttachmentBlob(proxyUrl, token) {
     throw new Error(`Failed to load attachment: ${response.status}`)
   }
 
-  return response.blob()
+  const blob = await response.blob()
+
+  // Try to extract a filename from the Content-Disposition header
+  const cd = response.headers.get('content-disposition')
+  const headerName = filenameFromContentDisposition(cd)
+  console.log('[AttachmentProxy] Content-Disposition:', cd, '→ parsed:', headerName)
+  console.log('[AttachmentProxy] Response content-type:', response.headers.get('content-type'))
+
+  return { blob, fileName: headerName }
 }
 
 /**
@@ -48,7 +79,7 @@ export async function openAttachment(publicId, token) {
   }
 
   try {
-    const blob = await fetchAttachmentBlob(proxyUrl, authToken)
+    const { blob } = await fetchAttachmentBlob(proxyUrl, authToken)
     const objectUrl = URL.createObjectURL(blob)
     window.open(objectUrl, '_blank')
     // Revoke after a short delay to allow the browser to open it
@@ -60,6 +91,7 @@ export async function openAttachment(publicId, token) {
 
 /**
  * Download an attachment by fetching it as a blob and triggering a download.
+ * Filename priority: explicit fileName param → Content-Disposition header → public_id fallback.
  *
  * @param {string} publicId - The attachment public_id from backend
  * @param {string} [fileName] - Optional filename; extracted from public_id if omitted
@@ -76,12 +108,22 @@ export async function downloadAttachment(publicId, fileName, token) {
   }
 
   try {
-    const blob = await fetchAttachmentBlob(proxyUrl, authToken)
+    const { blob, fileName: headerFileName } = await fetchAttachmentBlob(proxyUrl, authToken)
+    // Pick best available name: explicit param → header → last segment of public_id
+    const downloadName = fileName || headerFileName || filenameFromPublicId(publicId) || 'download'
+    console.log('[AttachmentProxy] Download name:', downloadName, {
+      fromParam: fileName,
+      fromHeader: headerFileName,
+      fromPublicId: filenameFromPublicId(publicId),
+    })
+
     const objectUrl = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = objectUrl
-    a.download = fileName || publicId.split('/').pop()
+    a.download = downloadName
+    document.body.appendChild(a)
     a.click()
+    document.body.removeChild(a)
     URL.revokeObjectURL(objectUrl)
   } catch (error) {
     console.error('[AttachmentProxy] Failed to download attachment:', error)
