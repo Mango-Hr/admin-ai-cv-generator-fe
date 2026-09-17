@@ -280,7 +280,7 @@ export default function Chat({ submissionId, jwtToken, staffName = 'Support', as
                               <button
                                 type="button"
                                 className="chat__message-attachment"
-                                onClick={() => openAttachment(attachment.public_id)}
+                                onClick={() => openAttachment(attachment.public_id, attachment.format)}
                                 title="Open attachment"
                               >
                                 <Paperclip className="chat__attachment-icon" />
@@ -289,7 +289,7 @@ export default function Chat({ submissionId, jwtToken, staffName = 'Support', as
                               <button
                                 type="button"
                                 className="chat__attachment-download-btn"
-                                onClick={() => downloadAttachment(attachment.public_id, getAttachmentName(attachment))}
+                                onClick={() => downloadAttachment(attachment.public_id, getAttachmentName(attachment), attachment.format)}
                                 title="Download attachment"
                               >
                                 ↓

@@ -1,6 +1,21 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://ai-cv-generator-be-production.up.railway.app'
 
 /**
+ * MIME types for common Cloudinary resource formats.
+ */
+const MIME_TYPES = {
+  pdf: 'application/pdf',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  doc: 'application/msword',
+  txt: 'text/plain',
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
+}
+
+/**
  * Build attachment proxy URL for admin side
  * @param {string} publicId - The attachment public_id from backend
  * @returns {string} Full proxy URL pointing at the backend
@@ -37,9 +52,10 @@ function filenameFromContentDisposition(header) {
  *
  * @param {string} proxyUrl - The proxy URL to fetch from
  * @param {string} token - The JWT auth token
+ * @param {string} [format] - Optional file format from the attachment object (e.g. 'pdf', 'docx')
  * @returns {Promise<{ blob: Blob, fileName: string|null }>} The blob and inferred filename
  */
-async function fetchAttachmentBlob(proxyUrl, token) {
+async function fetchAttachmentBlob(proxyUrl, token, format) {
   const response = await fetch(proxyUrl, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -50,24 +66,33 @@ async function fetchAttachmentBlob(proxyUrl, token) {
     throw new Error(`Failed to load attachment: ${response.status}`)
   }
 
-  const blob = await response.blob()
+  const rawBlob = await response.blob()
+
+  // If the server returned text/html (error page) or no useful content-type,
+  // and we know the real format, re-wrap the blob with the correct MIME type.
+  const serverType = response.headers.get('content-type') || ''
+  const knownMime = format && MIME_TYPES[format.toLowerCase()]
+  const blob = (knownMime && !serverType.includes(knownMime))
+    ? new Blob([rawBlob], { type: knownMime })
+    : rawBlob
 
   // Try to extract a filename from the Content-Disposition header
   const cd = response.headers.get('content-disposition')
   const headerName = filenameFromContentDisposition(cd)
-  console.log('[AttachmentProxy] Content-Disposition:', cd, '→ parsed:', headerName || filenameFromPublicId(proxyUrl))
 
   return { blob, fileName: headerName }
 }
 
 /**
- * Open an attachment in a new tab by fetching it as a blob first
- * (the proxy endpoint requires an auth header, so we can't use a direct URL).
+ * Open an attachment for viewing.
+ * For PDFs and images: opens in a full-screen overlay so the browser renders it natively.
+ * For other files (docx, etc): falls back to download since browsers can't display them.
  *
  * @param {string} publicId - The attachment public_id from backend
+ * @param {string} [format] - Optional file format from attachment (e.g. 'pdf')
  * @param {string} [token] - Optional JWT token; falls back to localStorage 'admin_token'
  */
-export async function openAttachment(publicId, token) {
+export async function openAttachment(publicId, format, token) {
   const proxyUrl = buildAdminAttachmentProxyUrl(publicId)
   if (!proxyUrl) return
 
@@ -78,14 +103,99 @@ export async function openAttachment(publicId, token) {
   }
 
   try {
-    const { blob } = await fetchAttachmentBlob(proxyUrl, authToken)
+    const { blob } = await fetchAttachmentBlob(proxyUrl, authToken, format)
     const objectUrl = URL.createObjectURL(blob)
-    window.open(objectUrl, '_blank')
-    // Revoke after a short delay to allow the browser to open it
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000)
+    const ext = (format || '').toLowerCase()
+
+    // PDFs and images can be rendered natively — use an overlay for best UX
+    if (ext === 'pdf' || MIME_TYPES[ext]?.startsWith('image/')) {
+      openInOverlay(objectUrl, ext)
+    } else {
+      // Other formats: download directly since browsers can't display them
+      const a = document.createElement('a')
+      a.href = objectUrl
+      a.download = filenameFromPublicId(publicId) || 'download'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(objectUrl)
+    }
   } catch (error) {
     console.error('[AttachmentProxy] Failed to open attachment:', error)
   }
+}
+
+/**
+ * Render a blob URL in a full-screen overlay (iframe for PDFs, img for images).
+ */
+function openInOverlay(objectUrl, ext) {
+  const overlay = document.createElement('div')
+  Object.assign(overlay.style, {
+    position: 'fixed',
+    inset: '0',
+    zIndex: '99999',
+    background: 'rgba(0,0,0,0.85)',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+  })
+
+  const closeBtn = document.createElement('button')
+  closeBtn.textContent = '\u2715 Close'
+  Object.assign(closeBtn.style, {
+    position: 'absolute',
+    top: '16px',
+    right: '16px',
+    padding: '8px 16px',
+    background: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '600',
+    zIndex: '1',
+  })
+  closeBtn.onclick = () => {
+    document.body.removeChild(overlay)
+    URL.revokeObjectURL(objectUrl)
+  }
+
+  const onKey = (e) => {
+    if (e.key === 'Escape') {
+      document.body.removeChild(overlay)
+      URL.revokeObjectURL(objectUrl)
+      document.removeEventListener('keydown', onKey)
+    }
+  }
+  document.addEventListener('keydown', onKey)
+
+  if (ext === 'pdf') {
+    const iframe = document.createElement('iframe')
+    iframe.src = objectUrl
+    Object.assign(iframe.style, {
+      width: '90vw',
+      height: '90vh',
+      border: 'none',
+      borderRadius: '8px',
+      background: 'white',
+    })
+    overlay.appendChild(closeBtn)
+    overlay.appendChild(iframe)
+  } else {
+    const img = document.createElement('img')
+    img.src = objectUrl
+    Object.assign(img.style, {
+      maxWidth: '90vw',
+      maxHeight: '85vh',
+      borderRadius: '8px',
+      objectFit: 'contain',
+    })
+    overlay.appendChild(closeBtn)
+    overlay.appendChild(img)
+  }
+
+  document.body.appendChild(overlay)
 }
 
 /**
@@ -94,9 +204,10 @@ export async function openAttachment(publicId, token) {
  *
  * @param {string} publicId - The attachment public_id from backend
  * @param {string} [fileName] - Optional filename; extracted from public_id if omitted
+ * @param {string} [format] - Optional file format from attachment (e.g. 'pdf')
  * @param {string} [token] - Optional JWT token; falls back to localStorage 'admin_token'
  */
-export async function downloadAttachment(publicId, fileName, token) {
+export async function downloadAttachment(publicId, fileName, format, token) {
   const proxyUrl = buildAdminAttachmentProxyUrl(publicId)
   if (!proxyUrl) return
 
@@ -107,10 +218,14 @@ export async function downloadAttachment(publicId, fileName, token) {
   }
 
   try {
-    const { blob, fileName: headerFileName } = await fetchAttachmentBlob(proxyUrl, authToken)
+    const { blob, fileName: headerFileName } = await fetchAttachmentBlob(proxyUrl, authToken, format)
     // Pick best available name: explicit param → header → last segment of public_id
-    const downloadName = fileName || headerFileName || filenameFromPublicId(publicId) || 'download'
+    let downloadName = fileName || headerFileName || filenameFromPublicId(publicId) || 'download'
 
+    // Ensure the file has the correct extension
+    if (format && !downloadName.toLowerCase().endsWith(`.${format.toLowerCase()}`)) {
+      downloadName = `${downloadName}.${format.toLowerCase()}`
+    }
 
     const objectUrl = URL.createObjectURL(blob)
     const a = document.createElement('a')
