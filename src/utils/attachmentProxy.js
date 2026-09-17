@@ -1,11 +1,13 @@
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://ai-cv-generator-be-production.up.railway.app'
+
 /**
  * Build attachment proxy URL for admin side
  * @param {string} publicId - The attachment public_id from backend
- * @returns {string} Proxy URL for opening/downloading the attachment
+ * @returns {string} Full proxy URL pointing at the backend
  */
 export const buildAdminAttachmentProxyUrl = (publicId) => {
   if (!publicId) return null
-  return `/api/v1/admin/attachments/proxy?public_id=${encodeURIComponent(publicId)}`
+  return `${API_BASE_URL}/api/v1/admin/attachments/proxy?public_id=${encodeURIComponent(publicId)}`
 }
 
 /**
@@ -90,11 +92,11 @@ export async function downloadAttachment(publicId, fileName, token) {
  * Build attachment proxy URL for client side
  * @param {string} submissionId - The submission ID
  * @param {string} publicId - The attachment public_id from backend
- * @returns {string} Proxy URL for opening/downloading the attachment
+ * @returns {string} Full proxy URL pointing at the backend
  */
 export const buildClientAttachmentProxyUrl = (submissionId, publicId) => {
   if (!publicId || !submissionId) return null
-  return `/api/v1/public/submissions/${encodeURIComponent(submissionId)}/attachments/proxy?public_id=${encodeURIComponent(publicId)}`
+  return `${API_BASE_URL}/api/v1/public/submissions/${encodeURIComponent(submissionId)}/attachments/proxy?public_id=${encodeURIComponent(publicId)}`
 }
 
 /**

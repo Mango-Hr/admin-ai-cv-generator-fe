@@ -3,6 +3,10 @@ import { Send, Paperclip, MessageCircle, Loader } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import chatService from '../../services/chatService'
 import { openAttachment, downloadAttachment } from '../../utils/attachmentProxy'
+
+/** Extract a display name from an attachment object, trying common field names */
+const getAttachmentName = (attachment) =>
+  attachment.original_name || attachment.file_name || attachment.filename || attachment.name || 'Attachment'
 import './Chat.css'
 
 const formatTime = (dateString) => {
@@ -267,12 +271,12 @@ export default function Chat({ submissionId, jwtToken, staffName = 'Support' }) 
                                 title="Open attachment"
                               >
                                 <Paperclip className="chat__attachment-icon" />
-                                <span className="chat__attachment-name">{attachment.name}</span>
+                                <span className="chat__attachment-name">{getAttachmentName(attachment)}</span>
                               </button>
                               <button
                                 type="button"
                                 className="chat__attachment-download-btn"
-                                onClick={() => downloadAttachment(attachment.public_id, attachment.name)}
+                                onClick={() => downloadAttachment(attachment.public_id, getAttachmentName(attachment))}
                                 title="Download attachment"
                               >
                                 ↓
